@@ -8,17 +8,20 @@ import (
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/igor-trentini/diffable/backend/internal/handler"
 	"github.com/igor-trentini/diffable/backend/internal/middleware"
+	"github.com/igor-trentini/diffable/backend/internal/service"
 )
 
 type Server struct {
-	Router        *chi.Mux
-	HealthHandler *handler.HealthHandler
+	Router          *chi.Mux
+	HealthHandler   *handler.HealthHandler
+	AnalysisHandler *handler.AnalysisHandler
 }
 
-func New(db handler.DBPinger, frontendURL string) *Server {
+func New(db handler.DBPinger, frontendURL string, analysisSvc service.AnalysisService) *Server {
 	s := &Server{
-		Router:        chi.NewRouter(),
-		HealthHandler: handler.NewHealthHandler(db),
+		Router:          chi.NewRouter(),
+		HealthHandler:   handler.NewHealthHandler(db),
+		AnalysisHandler: handler.NewAnalysisHandler(analysisSvc),
 	}
 
 	s.Router.Use(chimw.RequestID)

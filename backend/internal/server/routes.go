@@ -7,7 +7,11 @@ func (s *Server) RegisterRoutes() {
 	s.Router.Get("/readyz", s.HealthHandler.Readyz)
 
 	s.Router.Route("/api/v1", func(r chi.Router) {
-		// Phase 4: analysis endpoints
+		r.Post("/analyses/commit", s.AnalysisHandler.AnalyzeCommit)
+		r.Post("/analyses/range", s.AnalysisHandler.AnalyzeRange)
+		r.Post("/analyses/pr", s.AnalysisHandler.AnalyzePR)
+		r.Get("/analyses/{id}", s.AnalysisHandler.GetAnalysis)
+
 		// Phase 5: history and refinement endpoints
 	})
 }

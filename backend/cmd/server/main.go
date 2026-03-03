@@ -13,9 +13,15 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	oai "github.com/sashabaranov/go-openai"
 
+	"github.com/igor-trentini/diffable/backend/internal/bitbucket"
+	"github.com/igor-trentini/diffable/backend/internal/cache"
 	"github.com/igor-trentini/diffable/backend/internal/config"
+	genoai "github.com/igor-trentini/diffable/backend/internal/openai"
+	"github.com/igor-trentini/diffable/backend/internal/repository"
 	"github.com/igor-trentini/diffable/backend/internal/server"
+	"github.com/igor-trentini/diffable/backend/internal/service"
 )
 
 func main() {
@@ -42,7 +48,36 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv := server.New(pool, cfg.FrontendURL)
+	// Bitbucket client
+	bbClient := bitbucket.NewClient(bitbucket.Config{
+		BaseURL:  cfg.BitbucketBaseURL,
+		Email:    cfg.BitbucketEmail,
+		APIToken: cfg.BitbucketAPIToken,
+		Timeout:  cfg.BitbucketTimeout,
+	})
+
+	// In-memory cache
+	diffCache := cache.NewInMemoryCache()
+
+	// OpenAI generator
+	oaiClient := oai.NewClient(cfg.OpenAIAPIKey)
+	generator := genoai.NewGenerator(oaiClient, diffCache, genoai.GeneratorConfig{
+		DefaultModel:   cfg.OpenAIDefaultModel,
+		ComplexModel:   cfg.OpenAIComplexModel,
+		MaxTokens:      cfg.OpenAIMaxTokens,
+		Temperature:    float32(cfg.OpenAITemperature),
+		TokenThreshold: cfg.OpenAITokenThreshold,
+		CacheTTL:       cfg.CacheTTL,
+	})
+
+	// Repository
+	analysisRepo := repository.NewPostgresAnalysisRepository(pool)
+
+	// Service
+	analysisSvc := service.NewAnalysisService(bbClient, generator, analysisRepo, diffCache)
+
+	// Server
+	srv := server.New(pool, cfg.FrontendURL, analysisSvc)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
