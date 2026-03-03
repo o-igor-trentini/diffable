@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: diffable
+      POSTGRES_PASSWORD: diffable
+      POSTGRES_DB: diffable
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U diffable"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: build
+    command: go run github.com/air-verse/air@latest -c .air.toml
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    environment:
+      PORT: "8080"
+      DATABASE_URL: "postgres://diffable:diffable@db:5432/diffable?sslmode=disable"
+      FRONTEND_URL: "http://localhost:3000"
+      LOG_LEVEL: "debug"
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "3000:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      VITE_API_URL: "/api/v1"
+
+volumes:
+  pgdata-dev:
+  frontend_node_modules:
