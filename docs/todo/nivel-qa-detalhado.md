@@ -150,7 +150,7 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `frontend/src/features/shared/AdvancedSettings.tsx`
 
-- [ ] Adicionar `8192` ao array `TOKEN_OPTIONS`
+- [x] Adicionar `8192` ao array `TOKEN_OPTIONS`
 
 ---
 
@@ -158,30 +158,30 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 ### Backend
 
-- [ ] **DTO** (`request_test.go`): testar que `qa_detailed` e aceito como nivel valido
-- [ ] **DTO** (`request_test.go`): testar que `max_tokens = 8192` passa validacao e `8193` falha
-- [ ] **Tokenizer** (`tokenizer_test.go`): testar `PreprocessDiffForLevel` com `qa_detailed` mantem linhas de contexto
-- [ ] **Tokenizer** (`tokenizer_test.go`): testar `PreprocessDiffForLevel` com `functional` remove contexto (regressao)
-- [ ] **Prompts** (`prompts_test.go`): testar `buildSystemPromptForLevel("qa_detailed")` contem secoes esperadas
-- [ ] **Prompts** (`prompts_test.go`): testar `buildFewShotExamplesForLevel("qa_detailed")` retorna exemplos diferentes
-- [ ] **Prompts** (`prompts_test.go`): testar `buildUserPrompt` com `userContext` nao vazio inclui contexto
-- [ ] **Generator** (`generator_test.go`): testar que `qa_detailed` usa 4096 max_tokens por default
-- [ ] **Service** (`analysis_service_test.go`): testar que `UserContext` flui ate o `GenerationInput`
+- [x] **DTO** (`request_test.go`): testar que `qa_detailed` e aceito como nivel valido
+- [x] **DTO** (`request_test.go`): testar que `max_tokens = 8192` passa validacao e `8193` falha
+- [x] **Tokenizer** (`tokenizer_test.go`): testar `PreprocessDiffForLevel` com `qa_detailed` mantem linhas de contexto
+- [x] **Tokenizer** (`tokenizer_test.go`): testar `PreprocessDiffForLevel` com `functional` remove contexto (regressao)
+- [x] **Prompts** (`prompts_test.go`): testar `buildSystemPromptForLevel("qa_detailed")` contem secoes esperadas
+- [x] **Prompts** (`prompts_test.go`): testar `buildFewShotExamplesForLevel("qa_detailed")` retorna exemplos diferentes
+- [x] **Prompts** (`prompts_test.go`): testar `buildUserPrompt` com `userContext` nao vazio inclui contexto
+- [x] **Generator** (`generator_test.go`): testar que `qa_detailed` usa 4096 max_tokens por default
+- [x] **Service** (`analysis_service_test.go`): testar que `UserContext` flui ate o `GenerationInput`
 
 ### Frontend
 
-- [ ] **LevelSelector**: testar que 4 opcoes sao renderizadas, incluindo "QA Detalhado"
-- [ ] **PrForm** (`PrForm.test.tsx`): testar que `user_context` e incluido no payload quando preenchido
-- [ ] **PrForm** (`PrForm.test.tsx`): testar que `user_context` e omitido quando vazio
-- [ ] **CommitForm** (`CommitForm.test.tsx`): mesmo que PrForm
-- [ ] **RangeForm** (`RangeForm.test.tsx`): mesmo que PrForm
+- [x] **LevelSelector**: testar que 4 opcoes sao renderizadas, incluindo "QA Detalhado"
+- [x] **PrForm** (`PrForm.test.tsx`): testar que `user_context` e incluido no payload quando preenchido
+- [x] **PrForm** (`PrForm.test.tsx`): testar que `user_context` e omitido quando vazio
+- [x] **CommitForm** (`CommitForm.test.tsx`): mesmo que PrForm
+- [x] **RangeForm** (`RangeForm.test.tsx`): mesmo que PrForm
 
 ---
 
 ## Verificacao final
 
-- [ ] `cd backend && go test ./...` — todos os testes passam
-- [ ] `cd frontend && npm test` — todos os testes passam
+- [x] `cd backend && go test ./...` — todos os testes passam
+- [x] `cd frontend && npm test` — todos os testes passam
 - [ ] Teste manual: selecionar nivel "QA Detalhado", preencher contexto adicional, submeter PR e verificar que a descricao contem todas as secoes
 - [ ] Teste de retrocompatibilidade: niveis existentes (funcional, tecnico, executivo) continuam funcionando identicamente
 - [ ] Teste sem contexto adicional: submeter sem preencher contexto — comportamento deve ser identico ao anterior

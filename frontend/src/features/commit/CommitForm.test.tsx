@@ -86,6 +86,33 @@ describe('CommitForm', () => {
     expect(screen.getByLabelText('Hash do Commit')).toBeDisabled()
   })
 
+  it('includes user_context in payload when filled', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<CommitForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.click(screen.getByText('Colar Diff'))
+    await user.type(screen.getByLabelText('Diff'), 'diff --git a/main.go')
+    await user.type(screen.getByLabelText('Contexto Adicional'), 'Contexto de teste')
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.user_context).toBe('Contexto de teste')
+  })
+
+  it('omits user_context from payload when empty', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<CommitForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.click(screen.getByText('Colar Diff'))
+    await user.type(screen.getByLabelText('Diff'), 'diff --git a/main.go')
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.user_context).toBeUndefined()
+  })
+
   it('does not include overrides when using defaults', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()

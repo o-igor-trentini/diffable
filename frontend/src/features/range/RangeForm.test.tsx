@@ -62,6 +62,37 @@ describe('RangeForm', () => {
     })
   })
 
+  it('includes user_context in payload when filled', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<RangeForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.type(screen.getByLabelText('Workspace'), 'ws')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
+    await user.type(screen.getByLabelText('Hash Inicial (from)'), 'abc123')
+    await user.type(screen.getByLabelText('Hash Final (to)'), 'def456')
+    await user.type(screen.getByLabelText('Contexto Adicional'), 'Contexto de teste')
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.user_context).toBe('Contexto de teste')
+  })
+
+  it('omits user_context from payload when empty', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<RangeForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.type(screen.getByLabelText('Workspace'), 'ws')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
+    await user.type(screen.getByLabelText('Hash Inicial (from)'), 'abc123')
+    await user.type(screen.getByLabelText('Hash Final (to)'), 'def456')
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.user_context).toBeUndefined()
+  })
+
   it('does not include overrides when using defaults', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()

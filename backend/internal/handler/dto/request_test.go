@@ -133,6 +133,33 @@ func TestGenerationOverrides_Validate(t *testing.T) {
 	}
 }
 
+func TestValidateLevel_QADetailed(t *testing.T) {
+	t.Run("qa_detailed is a valid level", func(t *testing.T) {
+		err := validateLevel("qa_detailed")
+		assert.NoError(t, err)
+	})
+
+	t.Run("invalid level is rejected", func(t *testing.T) {
+		err := validateLevel("invalid_level")
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrValidation)
+	})
+}
+
+func TestGenerationOverrides_MaxTokens8192(t *testing.T) {
+	t.Run("max_tokens 8192 passes validation", func(t *testing.T) {
+		overrides := &GenerationOverrides{MaxTokens: intPtr(8192)}
+		assert.NoError(t, overrides.Validate())
+	})
+
+	t.Run("max_tokens 8193 fails validation", func(t *testing.T) {
+		overrides := &GenerationOverrides{MaxTokens: intPtr(8193)}
+		err := overrides.Validate()
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, domain.ErrValidation)
+	})
+}
+
 func TestAnalyzeCommitRequest_Validate_WithOverrides(t *testing.T) {
 	t.Run("valid request with valid overrides", func(t *testing.T) {
 		req := &AnalyzeCommitRequest{

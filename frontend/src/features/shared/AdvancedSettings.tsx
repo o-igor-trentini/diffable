@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Settings2, ChevronDown } from 'lucide-react'
 import type { GenerationOverrides } from '../../lib/api/types'
 
-const TOKEN_OPTIONS = [256, 512, 1024, 2048, 4096] as const
+const TOKEN_OPTIONS = [256, 512, 1024, 2048, 4096, 8192] as const
 
 interface ModelOption {
   value: string

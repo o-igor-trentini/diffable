@@ -129,6 +129,55 @@ func TestPreprocessDiff_EmptyDiff(t *testing.T) {
 	assert.Equal(t, "", result)
 }
 
+func TestPreprocessDiffForLevel_QADetailed_KeepsContextLines(t *testing.T) {
+	diff := `diff --git a/main.go b/main.go
+--- a/main.go
++++ b/main.go
+@@ -1,10 +1,11 @@
+ package main
+
+ import "fmt"
+
+ func hello() {
++	fmt.Println("hello")
+ }
+
+ func goodbye() {
+ 	fmt.Println("bye")
+ }`
+
+	result := PreprocessDiffForLevel(diff, "qa_detailed")
+	// Should keep the change line
+	assert.Contains(t, result, "+\tfmt.Println(\"hello\")")
+	// Should keep context lines around the change (within 5 lines)
+	assert.Contains(t, result, " package main")
+	assert.Contains(t, result, " func hello() {")
+	assert.Contains(t, result, " }")
+	// Should keep headers
+	assert.Contains(t, result, "diff --git a/main.go b/main.go")
+	assert.Contains(t, result, "--- a/main.go")
+	assert.Contains(t, result, "+++ b/main.go")
+}
+
+func TestPreprocessDiffForLevel_Functional_RemovesContext(t *testing.T) {
+	diff := `diff --git a/main.go b/main.go
+--- a/main.go
++++ b/main.go
+@@ -1,5 +1,6 @@
+ package main
+
+ import "fmt"
++import "os"
+
+ func main() {`
+
+	result := PreprocessDiffForLevel(diff, "functional")
+	assert.Contains(t, result, "+import \"os\"")
+	// Context lines should be removed for functional level
+	assert.NotContains(t, result, " package main")
+	assert.NotContains(t, result, " import \"fmt\"")
+}
+
 func TestChunkDiff_SmallDiff(t *testing.T) {
 	diff := `diff --git a/main.go b/main.go
 +func main() {}`

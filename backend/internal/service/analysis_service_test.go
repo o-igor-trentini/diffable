@@ -368,6 +368,90 @@ func TestGetAnalysis_NotFound(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
 
+// --- UserContext tests ---
+
+func TestAnalyzeCommit_UserContextFlowsToGenerator(t *testing.T) {
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "Result with context",
+			Model:       "gpt-4o-mini",
+			TokensUsed:  100,
+		},
+	}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	svc := NewAnalysisService(&mockBitbucketClient{}, gen, repo, c)
+
+	_, err := svc.AnalyzeCommit(context.Background(), &dto.AnalyzeCommitRequest{
+		RawDiff:     "diff --git a/main.go\n+user context test",
+		UserContext: "Este commit integra a API Nexus",
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called)
+	assert.Equal(t, "Este commit integra a API Nexus", gen.capturedInput.UserContext)
+}
+
+func TestAnalyzePR_UserContextFlowsToGenerator(t *testing.T) {
+	bb := &mockBitbucketClient{
+		diff: "diff --git a/main.go\n+pr user context",
+		pr:   &bitbucket.PullRequest{ID: 1, Title: "PR"},
+	}
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "PR with context",
+			Model:       "gpt-4o",
+			TokensUsed:  300,
+		},
+	}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	svc := NewAnalysisService(bb, gen, repo, c)
+
+	_, err := svc.AnalyzePR(context.Background(), &dto.AnalyzePRRequest{
+		Workspace:   "ws",
+		RepoSlug:    "repo",
+		PRID:        1,
+		UserContext: "Contexto do PR para QA",
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called)
+	assert.Equal(t, "Contexto do PR para QA", gen.capturedInput.UserContext)
+}
+
+func TestAnalyzeRange_UserContextFlowsToGenerator(t *testing.T) {
+	bb := &mockBitbucketClient{
+		commits: []bitbucket.Commit{{Hash: "abc", Message: "msg"}},
+		diff:    "diff --git a/main.go\n+range user context",
+	}
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "Range with context",
+			Model:       "gpt-4o-mini",
+			TokensUsed:  200,
+		},
+	}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	svc := NewAnalysisService(bb, gen, repo, c)
+
+	_, err := svc.AnalyzeRange(context.Background(), &dto.AnalyzeRangeRequest{
+		Workspace:   "ws",
+		RepoSlug:    "repo",
+		FromHash:    "abc",
+		ToHash:      "def",
+		UserContext: "Contexto do range",
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called)
+	assert.Equal(t, "Contexto do range", gen.capturedInput.UserContext)
+}
+
 // --- Override tests ---
 
 func intPtr(v int) *int          { return &v }

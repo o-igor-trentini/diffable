@@ -274,6 +274,53 @@ func TestGenerate_ModelAutoDelegatesToSelectModel(t *testing.T) {
 	assert.Equal(t, "gpt-4o-mini", out.Model)
 }
 
+func TestGenerate_QADetailedUsesDefault4096MaxTokens(t *testing.T) {
+	var capturedReq oai.ChatCompletionRequest
+	mock := &mockChatClient{
+		response: oai.ChatCompletionResponse{
+			Choices: []oai.ChatCompletionChoice{
+				{Message: oai.ChatCompletionMessage{Content: "QA detailed description"}},
+			},
+			Usage: oai.Usage{TotalTokens: 500},
+		},
+	}
+	wrapper := &requestCapturingClient{inner: mock, captured: &capturedReq}
+	gen := NewGenerator(wrapper, cache.NewInMemoryCache(), testGenConfig)
+
+	_, err := gen.Generate(context.Background(), GenerationInput{
+		Diff:         "diff --git a/main.go b/main.go\n+qa detailed test",
+		AnalysisType: "single_commit",
+		Level:        "qa_detailed",
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 4096, capturedReq.MaxTokens, "qa_detailed should default to 4096 max_tokens")
+}
+
+func TestGenerate_QADetailedMaxTokensOverrideRespected(t *testing.T) {
+	var capturedReq oai.ChatCompletionRequest
+	mock := &mockChatClient{
+		response: oai.ChatCompletionResponse{
+			Choices: []oai.ChatCompletionChoice{
+				{Message: oai.ChatCompletionMessage{Content: "QA override"}},
+			},
+			Usage: oai.Usage{TotalTokens: 500},
+		},
+	}
+	wrapper := &requestCapturingClient{inner: mock, captured: &capturedReq}
+	gen := NewGenerator(wrapper, cache.NewInMemoryCache(), testGenConfig)
+
+	_, err := gen.Generate(context.Background(), GenerationInput{
+		Diff:              "diff --git a/main.go b/main.go\n+qa override test",
+		AnalysisType:      "single_commit",
+		Level:             "qa_detailed",
+		MaxTokensOverride: intPtr(8192),
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, 8192, capturedReq.MaxTokens, "explicit override should take precedence over qa_detailed default")
+}
+
 func TestHasOverrides(t *testing.T) {
 	tests := []struct {
 		name     string
