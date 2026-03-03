@@ -133,6 +133,7 @@ func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCom
 		AnalysisType:   string(domain.AnalysisTypeSingleCommit),
 		CommitMessages: commitMessages,
 		Level:          level,
+		UserContext:    req.UserContext,
 	}
 	applyOverrides(&genInput, req.Overrides)
 
@@ -229,6 +230,7 @@ func (s *analysisService) AnalyzeRange(ctx context.Context, req *dto.AnalyzeRang
 		AnalysisType:   string(domain.AnalysisTypeCommitRange),
 		CommitMessages: commitMessages,
 		Level:          level,
+		UserContext:    req.UserContext,
 	}
 	applyOverrides(&genInput, req.Overrides)
 
@@ -326,6 +328,7 @@ func (s *analysisService) AnalyzePR(ctx context.Context, req *dto.AnalyzePRReque
 		PRTitle:       prTitle,
 		PRDescription: prDesc,
 		Level:         level,
+		UserContext:   req.UserContext,
 	}
 	applyOverrides(&genInput, req.Overrides)
 

@@ -74,16 +74,16 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `backend/internal/openai/prompts.go`
 
-- [ ] Adicionar case `"qa_detailed"` em `buildSystemPromptForLevel()` com prompt detalhado:
+- [x] Adicionar case `"qa_detailed"` em `buildSystemPromptForLevel()` com prompt detalhado:
   - Persona: analista de qualidade senior
   - Instrucoes para analisar cada aspecto (banco, API, regras de negocio, fluxos, cenarios de teste)
   - Sem limite rigido de palavras: priorizar completude sobre brevidade
   - Formato obrigatorio com 7 secoes (omitir secoes que nao se aplicam)
-- [ ] Refatorar `buildFewShotExamples()` em `buildFewShotExamplesForLevel(level string)`:
+- [x] Refatorar `buildFewShotExamples()` em `buildFewShotExamplesForLevel(level string)`:
   - Manter `buildFewShotExamples()` delegando para `buildFewShotExamplesForLevel("functional")` (retrocompatibilidade)
   - `"qa_detailed"` retorna exemplo dedicado com todas as secoes preenchidas (cenario de integracao CNH/Nexus como referencia)
   - Demais niveis retornam os exemplos atuais (login lockout + PIX)
-- [ ] Modificar assinatura de `buildUserPrompt()` para aceitar parametro `userContext string`:
+- [x] Modificar assinatura de `buildUserPrompt()` para aceitar parametro `userContext string`:
   - Quando nao vazio, insere antes do titulo do PR: `\n\nContexto adicional fornecido pelo desenvolvedor:\n{userContext}`
   - Quando vazio, comportamento identico ao atual
 
@@ -93,9 +93,9 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `backend/internal/service/analysis_service.go`
 
-- [ ] Em `AnalyzePR()` (linha 323): adicionar `UserContext: req.UserContext` no `GenerationInput`
-- [ ] Em `AnalyzeCommit()`: mesmo tratamento — adicionar `UserContext: req.UserContext`
-- [ ] Em `AnalyzeRange()`: mesmo tratamento — adicionar `UserContext: req.UserContext`
+- [x] Em `AnalyzePR()` (linha 323): adicionar `UserContext: req.UserContext` no `GenerationInput`
+- [x] Em `AnalyzeCommit()`: mesmo tratamento — adicionar `UserContext: req.UserContext`
+- [x] Em `AnalyzeRange()`: mesmo tratamento — adicionar `UserContext: req.UserContext`
 
 ---
 
@@ -103,7 +103,7 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `frontend/src/lib/api/types.ts`
 
-- [ ] Adicionar `user_context?: string` em:
+- [x] Adicionar `user_context?: string` em:
   - `AnalyzePRRequest`
   - `AnalyzeCommitRequest`
   - `AnalyzeRangeRequest`

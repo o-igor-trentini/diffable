@@ -10,6 +10,7 @@ export interface AnalyzeCommitRequest {
   commit_hash?: string
   raw_diff?: string
   level?: string
+  user_context?: string
   overrides?: GenerationOverrides
 }
 
@@ -19,6 +20,7 @@ export interface AnalyzeRangeRequest {
   from_hash: string
   to_hash: string
   level?: string
+  user_context?: string
   overrides?: GenerationOverrides
 }
 
@@ -30,6 +32,7 @@ export interface AnalyzePRRequest {
   pr_title?: string
   pr_description?: string
   level?: string
+  user_context?: string
   overrides?: GenerationOverrides
 }
 
