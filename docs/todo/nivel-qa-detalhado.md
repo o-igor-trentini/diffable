@@ -23,13 +23,13 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `backend/internal/handler/dto/request.go`
 
-- [ ] Adicionar `"qa_detailed": true` no mapa `validLevels` (linha 9)
-- [ ] Atualizar mensagem de erro em `validateLevel` (linha 49) para incluir `qa_detailed`
-- [ ] Adicionar campo `UserContext string` (json: `user_context,omitempty`) em:
+- [x] Adicionar `"qa_detailed": true` no mapa `validLevels` (linha 9)
+- [x] Atualizar mensagem de erro em `validateLevel` (linha 49) para incluir `qa_detailed`
+- [x] Adicionar campo `UserContext string` (json: `user_context,omitempty`) em:
   - `AnalyzePRRequest`
   - `AnalyzeCommitRequest`
   - `AnalyzeRangeRequest`
-- [ ] Aumentar limite superior de `max_tokens` de 4096 para 8192 em `GenerationOverrides.Validate()` (linha 32)
+- [x] Aumentar limite superior de `max_tokens` de 4096 para 8192 em `GenerationOverrides.Validate()` (linha 32)
 
 ---
 
@@ -37,9 +37,9 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `backend/internal/openai/generator.go`
 
-- [ ] Adicionar campo `UserContext string` ao `GenerationInput` (apos `Level`, linha 23)
-- [ ] No metodo `Generate()` (linha 110): trocar `PreprocessDiff(input.Diff)` por `PreprocessDiffForLevel(input.Diff, level)`
-- [ ] No metodo `Generate()` (linhas 114-117): adicionar default de `maxTokens = 4096` quando `level == "qa_detailed"` e nao houver override:
+- [x] Adicionar campo `UserContext string` ao `GenerationInput` (apos `Level`, linha 23)
+- [x] No metodo `Generate()` (linha 110): trocar `PreprocessDiff(input.Diff)` por `PreprocessDiffForLevel(input.Diff, level)`
+- [x] No metodo `Generate()` (linhas 114-117): adicionar default de `maxTokens = 4096` quando `level == "qa_detailed"` e nao houver override:
   ```go
   maxTokens := g.config.MaxTokens
   if input.MaxTokensOverride != nil {
@@ -48,8 +48,8 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
       maxTokens = 4096
   }
   ```
-- [ ] No metodo `buildMessages()` (linha 201): trocar `buildFewShotExamples()` por `buildFewShotExamplesForLevel(level)`
-- [ ] No metodo `buildMessages()` (linha 208): passar `input.UserContext` para `buildUserPrompt()`
+- [x] No metodo `buildMessages()` (linha 201): trocar `buildFewShotExamples()` por `buildFewShotExamplesForLevel(level)`
+- [x] No metodo `buildMessages()` (linha 208): passar `input.UserContext` para `buildUserPrompt()`
 
 ---
 
@@ -57,10 +57,10 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `backend/internal/openai/tokenizer.go`
 
-- [ ] Criar funcao `PreprocessDiffForLevel(rawDiff, level string) string`:
+- [x] Criar funcao `PreprocessDiffForLevel(rawDiff, level string) string`:
   - Para `qa_detailed`: chama `reduceContextWithLines(section, 5)` ao inves de `reduceContext(section)`
   - Para demais niveis: chama `reduceContext(section)` (comportamento atual inalterado)
-- [ ] Criar funcao `reduceContextWithLines(section string, contextLines int) string`:
+- [x] Criar funcao `reduceContextWithLines(section string, contextLines int) string`:
   - Identifica indices das linhas com mudancas (+/-)
   - Monta um set de indices a manter (N linhas antes e depois de cada mudanca)
   - Sempre mantem headers (diff --git, ---, +++, @@)

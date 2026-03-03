@@ -60,6 +60,77 @@ Regras:
 	}
 }
 
+func buildFewShotExamplesForLevel(level string) []Message {
+	switch level {
+	case "qa_detailed":
+		return []Message{
+			{
+				Role: "user",
+				Content: `Gere uma descrição detalhada para QA validar este PR:
+
+diff --git a/src/integration/cnh-nexus.ts b/src/integration/cnh-nexus.ts
+--- a/src/integration/cnh-nexus.ts
++++ b/src/integration/cnh-nexus.ts
+@@ -1,8 +1,25 @@
++import { NexusClient } from '@nexus/sdk';
++
++interface CNHData {
++  numero: string;
++  dataEmissao: string | null;
++  categoria: string;
++}
++
++async function fetchCNHFromNexus(cpf: string): Promise<CNHData> {
++  const client = new NexusClient();
++  const response = await client.consultarCNH(cpf);
++  return {
++    numero: response.documentNumber,
++    dataEmissao: response.issueDate ?? null,
++    categoria: response.category,
++  };
++}
+diff --git a/db/migrations/20240115_add_cnh_fields.sql b/db/migrations/20240115_add_cnh_fields.sql
++ALTER TABLE clientes ADD COLUMN cnh_data_emissao DATE NULL;
++ALTER TABLE clientes ADD COLUMN cnh_categoria VARCHAR(5) NULL;`,
+			},
+			{
+				Role: "assistant",
+				Content: `**Contexto:** Integração com a API Nexus para consulta de dados da CNH do cliente. O campo de data de emissão é opcional e pode vir vazio dependendo do estado emissor.
+
+**Mudanças no Banco de Dados:**
+- Tabela ` + "`clientes`" + `: adicionadas colunas ` + "`cnh_data_emissao`" + ` (DATE, nullable) e ` + "`cnh_categoria`" + ` (VARCHAR(5), nullable)
+- Migração: ` + "`20240115_add_cnh_fields.sql`" + `
+
+**Mudanças de API/Integrações:**
+- Nova integração com API Nexus via SDK (` + "`@nexus/sdk`" + `)
+- Endpoint consumido: ` + "`consultarCNH(cpf)`" + ` — retorna número, data de emissão e categoria
+- Campo ` + "`dataEmissao`" + ` pode retornar ` + "`null`" + ` (tratado com nullish coalescing)
+
+**Regras de Negócio:**
+- Data de emissão da CNH é opcional (nullable) — alguns estados não fornecem essa informação
+- Categoria da CNH é limitada a 5 caracteres (ex: "AB", "AE")
+
+**Fluxos Afetados:**
+- Caminho feliz: CPF válido → API Nexus retorna dados completos → dados salvos na tabela clientes
+- Alternativo: CPF válido, mas data de emissão ausente → campo salvo como NULL
+- Caso de borda: CPF inválido ou API Nexus indisponível → tratamento de erro necessário
+
+**Cenários de Teste Sugeridos:**
+- Enviar CPF válido com todos os campos preenchidos → verificar persistência correta
+- Enviar CPF válido sem data de emissão → verificar que ` + "`cnh_data_emissao`" + ` é NULL
+- Enviar CPF inválido → verificar tratamento de erro
+- Simular API Nexus indisponível → verificar fallback/erro adequado
+
+**Observações:**
+- As colunas são nullable, sem impacto em registros existentes
+- Dependência externa: SDK Nexus deve estar configurado no ambiente de QA`,
+			},
+		}
+	default:
+		return buildFewShotExamples()
+	}
+}
+
 func buildFewShotExamples() []Message {
 	return []Message{
 		{
@@ -115,7 +186,7 @@ diff --git a/src/checkout/payment.ts b/src/checkout/payment.ts
 	}
 }
 
-func buildUserPrompt(diff, analysisType string, commitMessages []string, prTitle, prDescription string) string {
+func buildUserPrompt(diff, analysisType string, commitMessages []string, prTitle, prDescription, userContext string) string {
 	var prefix string
 	switch analysisType {
 	case "single_commit":
@@ -129,6 +200,9 @@ func buildUserPrompt(diff, analysisType string, commitMessages []string, prTitle
 	}
 
 	var context string
+	if userContext != "" {
+		context += fmt.Sprintf("\n\nContexto adicional fornecido pelo desenvolvedor:\n%s", userContext)
+	}
 	if prTitle != "" {
 		context += fmt.Sprintf("\nTítulo do PR: %s", prTitle)
 	}

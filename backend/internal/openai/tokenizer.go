@@ -32,6 +32,10 @@ var filteredPatterns = []string{
 }
 
 func PreprocessDiff(rawDiff string) string {
+	return PreprocessDiffForLevel(rawDiff, "functional")
+}
+
+func PreprocessDiffForLevel(rawDiff, level string) string {
 	if rawDiff == "" {
 		return ""
 	}
@@ -46,7 +50,11 @@ func PreprocessDiff(rawDiff string) string {
 		if isBinarySection(section) {
 			continue
 		}
-		kept = append(kept, reduceContext(section))
+		if level == "qa_detailed" {
+			kept = append(kept, reduceContextWithLines(section, 5))
+		} else {
+			kept = append(kept, reduceContext(section))
+		}
 	}
 
 	return strings.Join(kept, "\n")
@@ -139,6 +147,61 @@ func shouldFilterSection(section string) bool {
 
 func isBinarySection(section string) bool {
 	return strings.Contains(section, "Binary files") && strings.Contains(section, "differ")
+}
+
+func reduceContextWithLines(section string, contextLines int) string {
+	lines := strings.Split(section, "\n")
+
+	changeIndices := make(map[int]bool)
+	for i, line := range lines {
+		if line == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "+") || strings.HasPrefix(line, "-") {
+			if !strings.HasPrefix(line, "---") && !strings.HasPrefix(line, "+++") {
+				changeIndices[i] = true
+			}
+		}
+	}
+
+	keepIndices := make(map[int]bool)
+	for i, line := range lines {
+		if strings.HasPrefix(line, "diff --git") ||
+			strings.HasPrefix(line, "---") ||
+			strings.HasPrefix(line, "+++") ||
+			strings.HasPrefix(line, "@@") {
+			keepIndices[i] = true
+			continue
+		}
+
+		if changeIndices[i] {
+			keepIndices[i] = true
+			continue
+		}
+	}
+
+	for idx := range changeIndices {
+		for delta := 1; delta <= contextLines; delta++ {
+			before := idx - delta
+			after := idx + delta
+
+			if before >= 0 && !changeIndices[before] {
+				keepIndices[before] = true
+			}
+			if after < len(lines) && !changeIndices[after] {
+				keepIndices[after] = true
+			}
+		}
+	}
+
+	var result []string
+	for i, line := range lines {
+		if keepIndices[i] {
+			result = append(result, line)
+		}
+	}
+
+	return strings.Join(result, "\n")
 }
 
 func reduceContext(section string) string {

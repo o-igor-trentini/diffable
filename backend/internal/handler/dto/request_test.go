@@ -85,7 +85,7 @@ func TestGenerationOverrides_Validate(t *testing.T) {
 		},
 		{
 			name:      "max_tokens too high",
-			overrides: &GenerationOverrides{MaxTokens: intPtr(4097)},
+			overrides: &GenerationOverrides{MaxTokens: intPtr(8193)},
 			wantErr:   true,
 		},
 		{

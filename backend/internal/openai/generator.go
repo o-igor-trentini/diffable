@@ -21,6 +21,7 @@ type GenerationInput struct {
 	PRTitle        string
 	PRDescription  string
 	Level          string
+	UserContext    string
 
 	MaxTokensOverride   *int
 	TemperatureOverride *float64
@@ -107,13 +108,15 @@ func (g *openaiGenerator) Generate(ctx context.Context, input GenerationInput) (
 		}
 	}
 
-	processed := PreprocessDiff(input.Diff)
+	processed := PreprocessDiffForLevel(input.Diff, level)
 	tokenCount := CountTokens(processed, g.config.DefaultModel)
 	model := g.resolveModel(input, tokenCount)
 
 	maxTokens := g.config.MaxTokens
 	if input.MaxTokensOverride != nil {
 		maxTokens = *input.MaxTokensOverride
+	} else if level == "qa_detailed" {
+		maxTokens = 4096
 	}
 
 	temperature := g.config.Temperature
@@ -198,14 +201,14 @@ func (g *openaiGenerator) buildMessages(diff string, input GenerationInput) []oa
 		{Role: oai.ChatMessageRoleSystem, Content: buildSystemPromptForLevel(level)},
 	}
 
-	for _, ex := range buildFewShotExamples() {
+	for _, ex := range buildFewShotExamplesForLevel(level) {
 		messages = append(messages, oai.ChatCompletionMessage{
 			Role:    ex.Role,
 			Content: ex.Content,
 		})
 	}
 
-	userPrompt := buildUserPrompt(diff, input.AnalysisType, input.CommitMessages, input.PRTitle, input.PRDescription)
+	userPrompt := buildUserPrompt(diff, input.AnalysisType, input.CommitMessages, input.PRTitle, input.PRDescription, input.UserContext)
 	messages = append(messages, oai.ChatCompletionMessage{
 		Role:    oai.ChatMessageRoleUser,
 		Content: userPrompt,

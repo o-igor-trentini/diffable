@@ -7,9 +7,10 @@ import (
 )
 
 var validLevels = map[string]bool{
-	"technical":  true,
-	"functional": true,
-	"executive":  true,
+	"technical":   true,
+	"functional":  true,
+	"executive":   true,
+	"qa_detailed": true,
 }
 
 var validModels = map[string]bool{
@@ -29,8 +30,8 @@ func (o *GenerationOverrides) Validate() error {
 		return nil
 	}
 
-	if o.MaxTokens != nil && (*o.MaxTokens < 64 || *o.MaxTokens > 4096) {
-		return fmt.Errorf("%w: max_tokens must be between 64 and 4096", domain.ErrValidation)
+	if o.MaxTokens != nil && (*o.MaxTokens < 64 || *o.MaxTokens > 8192) {
+		return fmt.Errorf("%w: max_tokens must be between 64 and 8192", domain.ErrValidation)
 	}
 
 	if o.Temperature != nil && (*o.Temperature < 0.0 || *o.Temperature > 2.0) {
@@ -46,18 +47,19 @@ func (o *GenerationOverrides) Validate() error {
 
 func validateLevel(level string) error {
 	if level != "" && !validLevels[level] {
-		return fmt.Errorf("%w: level must be one of: technical, functional, executive", domain.ErrValidation)
+		return fmt.Errorf("%w: level must be one of: technical, functional, executive, qa_detailed", domain.ErrValidation)
 	}
 	return nil
 }
 
 type AnalyzeCommitRequest struct {
-	Workspace  string               `json:"workspace"`
-	RepoSlug   string               `json:"repo_slug"`
-	CommitHash string               `json:"commit_hash"`
-	RawDiff    string               `json:"raw_diff"`
-	Level      string               `json:"level"`
-	Overrides  *GenerationOverrides `json:"overrides,omitempty"`
+	Workspace   string               `json:"workspace"`
+	RepoSlug    string               `json:"repo_slug"`
+	CommitHash  string               `json:"commit_hash"`
+	RawDiff     string               `json:"raw_diff"`
+	Level       string               `json:"level"`
+	UserContext string               `json:"user_context,omitempty"`
+	Overrides   *GenerationOverrides `json:"overrides,omitempty"`
 }
 
 func (r *AnalyzeCommitRequest) Validate() error {
@@ -84,12 +86,13 @@ func (r *AnalyzeCommitRequest) Validate() error {
 }
 
 type AnalyzeRangeRequest struct {
-	Workspace string               `json:"workspace"`
-	RepoSlug  string               `json:"repo_slug"`
-	FromHash  string               `json:"from_hash"`
-	ToHash    string               `json:"to_hash"`
-	Level     string               `json:"level"`
-	Overrides *GenerationOverrides `json:"overrides,omitempty"`
+	Workspace   string               `json:"workspace"`
+	RepoSlug    string               `json:"repo_slug"`
+	FromHash    string               `json:"from_hash"`
+	ToHash      string               `json:"to_hash"`
+	Level       string               `json:"level"`
+	UserContext string               `json:"user_context,omitempty"`
+	Overrides   *GenerationOverrides `json:"overrides,omitempty"`
 }
 
 func (r *AnalyzeRangeRequest) Validate() error {
@@ -122,6 +125,7 @@ type AnalyzePRRequest struct {
 	PRTitle       string               `json:"pr_title"`
 	PRDescription string               `json:"pr_description"`
 	Level         string               `json:"level"`
+	UserContext   string               `json:"user_context,omitempty"`
 	Overrides     *GenerationOverrides `json:"overrides,omitempty"`
 }
 
