@@ -22,9 +22,9 @@ describe('ResultDisplay', () => {
   it('shows level, model and token info', () => {
     render(<ResultDisplay result={mockResult} />)
 
-    expect(screen.getByText('Nível: Funcional')).toBeInTheDocument()
-    expect(screen.getByText('Modelo: gpt-4o-mini')).toBeInTheDocument()
-    expect(screen.getByText('Tokens: 150')).toBeInTheDocument()
+    expect(screen.getByText('Funcional')).toBeInTheDocument()
+    expect(screen.getByText('gpt-4o-mini')).toBeInTheDocument()
+    expect(screen.getByText('150 tokens')).toBeInTheDocument()
   })
 
   it('renders copy and export buttons', () => {

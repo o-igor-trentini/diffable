@@ -2,25 +2,31 @@ import type { TextareaHTMLAttributes } from 'react'
 
 interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
+  hint?: string
   error?: string
 }
 
-export function TextArea({ label, error, className = '', id, ...props }: TextAreaProps) {
+export function TextArea({ label, hint, error, className = '', id, ...props }: TextAreaProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor={id} className="text-sm font-medium text-stone-700 dark:text-stone-300">
           {label}
         </label>
       )}
       <textarea
         id={id}
-        className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 ${
-          error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+        className={`w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors placeholder:text-stone-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:bg-white/[0.03] dark:text-stone-100 dark:placeholder:text-stone-600 dark:focus:border-violet-500/50 dark:focus:ring-violet-500/10 ${
+          error
+            ? 'border-red-400 dark:border-red-500/50'
+            : 'border-stone-200 dark:border-white/[0.08]'
         } ${className}`}
         {...props}
       />
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+      {hint && !error && (
+        <p className="text-xs text-stone-400 dark:text-stone-500">{hint}</p>
+      )}
     </div>
   )
 }

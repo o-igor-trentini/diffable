@@ -63,11 +63,12 @@ func (r *postgresAnalysisRepository) Create(ctx context.Context, analysis *domai
 
 func (r *postgresAnalysisRepository) GetByID(ctx context.Context, id string) (*domain.Analysis, error) {
 	query := `
-		SELECT id, analysis_type, status, workspace, repo_slug,
-			commit_hash, from_hash, to_hash, pr_id,
-			raw_diff, diff_hash, generated_desc,
-			model_used, tokens_used, error_message,
-			level, created_at, updated_at
+		SELECT id, analysis_type, status,
+			COALESCE(workspace, ''), COALESCE(repo_slug, ''),
+			COALESCE(commit_hash, ''), COALESCE(from_hash, ''), COALESCE(to_hash, ''), pr_id,
+			COALESCE(raw_diff, ''), COALESCE(diff_hash, ''), COALESCE(generated_desc, ''),
+			COALESCE(model_used, ''), tokens_used, COALESCE(error_message, ''),
+			COALESCE(level, 'functional'), created_at, updated_at
 		FROM analyses WHERE id = $1`
 
 	a := &domain.Analysis{}
@@ -90,11 +91,12 @@ func (r *postgresAnalysisRepository) GetByID(ctx context.Context, id string) (*d
 
 func (r *postgresAnalysisRepository) GetByDiffHash(ctx context.Context, hash string) (*domain.Analysis, error) {
 	query := `
-		SELECT id, analysis_type, status, workspace, repo_slug,
-			commit_hash, from_hash, to_hash, pr_id,
-			raw_diff, diff_hash, generated_desc,
-			model_used, tokens_used, error_message,
-			level, created_at, updated_at
+		SELECT id, analysis_type, status,
+			COALESCE(workspace, ''), COALESCE(repo_slug, ''),
+			COALESCE(commit_hash, ''), COALESCE(from_hash, ''), COALESCE(to_hash, ''), pr_id,
+			COALESCE(raw_diff, ''), COALESCE(diff_hash, ''), COALESCE(generated_desc, ''),
+			COALESCE(model_used, ''), tokens_used, COALESCE(error_message, ''),
+			COALESCE(level, 'functional'), created_at, updated_at
 		FROM analyses
 		WHERE diff_hash = $1 AND status = 'completed'
 		ORDER BY created_at DESC
@@ -121,11 +123,12 @@ func (r *postgresAnalysisRepository) GetByDiffHash(ctx context.Context, hash str
 func (r *postgresAnalysisRepository) List(ctx context.Context, filter AnalysisFilter, offset, limit int) ([]domain.Analysis, int, error) {
 	countQuery := "SELECT COUNT(*) FROM analyses"
 	listQuery := `
-		SELECT id, analysis_type, status, workspace, repo_slug,
-			commit_hash, from_hash, to_hash, pr_id,
-			raw_diff, diff_hash, generated_desc,
-			model_used, tokens_used, error_message,
-			level, created_at, updated_at
+		SELECT id, analysis_type, status,
+			COALESCE(workspace, ''), COALESCE(repo_slug, ''),
+			COALESCE(commit_hash, ''), COALESCE(from_hash, ''), COALESCE(to_hash, ''), pr_id,
+			COALESCE(raw_diff, ''), COALESCE(diff_hash, ''), COALESCE(generated_desc, ''),
+			COALESCE(model_used, ''), tokens_used, COALESCE(error_message, ''),
+			COALESCE(level, 'functional'), created_at, updated_at
 		FROM analyses`
 
 	var args []any

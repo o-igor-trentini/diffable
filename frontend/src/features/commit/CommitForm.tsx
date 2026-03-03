@@ -3,16 +3,11 @@ import { Zap } from 'lucide-react'
 import { Button } from '../shared/Button'
 import { TextInput } from '../shared/TextInput'
 import { TextArea } from '../shared/TextArea'
-import { Select } from '../shared/Select'
 import { AutocompleteInput } from '../shared/AutocompleteInput'
+import { ModeToggle, type SourceMode } from '../shared/ModeToggle'
+import { LevelSelector } from '../shared/LevelSelector'
 import { useRepositories } from '@/lib/hooks/useRepositories'
 import type { AnalyzeCommitRequest } from '@/lib/api/types'
-
-const levelOptions = [
-  { value: 'functional', label: 'Funcional' },
-  { value: 'technical', label: 'Técnico' },
-  { value: 'executive', label: 'Executivo' },
-]
 
 interface CommitFormProps {
   onSubmit: (req: AnalyzeCommitRequest) => void
@@ -20,6 +15,7 @@ interface CommitFormProps {
 }
 
 export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
+  const [mode, setMode] = useState<SourceMode>('bitbucket')
   const [workspace, setWorkspace] = useState('')
   const [repoSlug, setRepoSlug] = useState('')
   const [commitHash, setCommitHash] = useState('')
@@ -31,7 +27,7 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
-    if (rawDiff.trim()) {
+    if (mode === 'manual') {
       onSubmit({ raw_diff: rawDiff.trim(), level })
     } else {
       onSubmit({
@@ -43,70 +39,76 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
     }
   }
 
-  const hasHash = workspace.trim() && repoSlug.trim() && commitHash.trim()
-  const hasRawDiff = rawDiff.trim()
-  const isValid = hasHash || hasRawDiff
+  const isValid =
+    mode === 'bitbucket'
+      ? !!(workspace.trim() && repoSlug.trim() && commitHash.trim())
+      : !!rawDiff.trim()
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <TextInput
-          id="commit-workspace"
-          label="Workspace"
-          placeholder="meu-workspace"
-          value={workspace}
-          onChange={(e) => setWorkspace(e.target.value)}
-          disabled={isPending}
-        />
-        <AutocompleteInput
-          id="commit-repo"
-          label="Repositório"
-          placeholder="meu-repo"
-          value={repoSlug}
-          onChange={setRepoSlug}
-          onQueryChange={setRepoQuery}
-          options={(repos || []).map((r) => ({ value: r.slug, label: r.name }))}
-          loading={reposLoading}
-          disabled={isPending}
-        />
-        <TextInput
-          id="commit-hash"
-          label="Hash do Commit"
-          placeholder="abc1234"
-          value={commitHash}
-          onChange={(e) => setCommitHash(e.target.value)}
-          disabled={isPending}
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <ModeToggle mode={mode} onModeChange={setMode} disabled={isPending} />
+
+      {mode === 'bitbucket' ? (
+        <div className="animate-fade-up space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <TextInput
+              id="commit-workspace"
+              label="Workspace"
+              placeholder="minha-empresa"
+              hint="Slug do workspace no Bitbucket"
+              value={workspace}
+              onChange={(e) => setWorkspace(e.target.value)}
+              disabled={isPending}
+            />
+            <AutocompleteInput
+              id="commit-repo"
+              label="Repositorio"
+              placeholder="Digite para buscar..."
+              hint="Digite 2+ caracteres para buscar repositorios"
+              value={repoSlug}
+              onChange={setRepoSlug}
+              onQueryChange={setRepoQuery}
+              options={(repos || []).map((r) => ({ value: r.slug, label: r.name }))}
+              loading={reposLoading}
+              disabled={isPending}
+              dependencyMet={workspace.trim().length >= 2}
+              dependencyMessage="Preencha o workspace primeiro (min. 2 caracteres)"
+            />
+          </div>
+          <TextInput
+            id="commit-hash"
+            label="Hash do Commit"
+            placeholder="abc1234def5678"
+            hint="SHA completo ou abreviado do commit"
+            value={commitHash}
+            onChange={(e) => setCommitHash(e.target.value)}
+            disabled={isPending}
+            className="font-mono"
+          />
+        </div>
+      ) : (
+        <div className="animate-fade-up">
+          <TextArea
+            id="commit-raw-diff"
+            label="Diff"
+            placeholder={'Cole aqui a saida do comando git diff...\n\ndiff --git a/arquivo.ts b/arquivo.ts\n--- a/arquivo.ts\n+++ b/arquivo.ts\n@@ -1,3 +1,4 @@'}
+            hint="Cole o conteudo do diff diretamente (saida de git diff, git show, etc.)"
+            rows={10}
+            value={rawDiff}
+            onChange={(e) => setRawDiff(e.target.value)}
+            disabled={isPending}
+            className="font-mono text-xs"
+          />
+        </div>
+      )}
+
+      <div className="border-t border-stone-100 pt-6 dark:border-white/[0.04]">
+        <LevelSelector value={level} onChange={setLevel} disabled={isPending} />
       </div>
-
-      <div className="relative flex items-center py-2">
-        <div className="flex-grow border-t border-gray-300 dark:border-gray-600" />
-        <span className="mx-4 shrink-0 text-xs text-gray-500 dark:text-gray-400">OU cole o diff manualmente</span>
-        <div className="flex-grow border-t border-gray-300 dark:border-gray-600" />
-      </div>
-
-      <TextArea
-        id="commit-raw-diff"
-        label="Diff (raw)"
-        placeholder="Cole o diff aqui..."
-        rows={6}
-        value={rawDiff}
-        onChange={(e) => setRawDiff(e.target.value)}
-        disabled={isPending}
-      />
-
-      <Select
-        id="commit-level"
-        label="Nível da Descrição"
-        options={levelOptions}
-        value={level}
-        onChange={(e) => setLevel(e.target.value)}
-        disabled={isPending}
-      />
 
       <Button type="submit" disabled={!isValid} loading={isPending}>
         <Zap size={16} />
-        Gerar Descrição
+        Gerar Descricao
       </Button>
     </form>
   )

@@ -1,9 +1,13 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -31,20 +35,35 @@ type Config struct {
 	DBMinConns   int
 }
 
-func Load() *Config {
-	return &Config{
+func Load() (*Config, error) {
+	// Load .env file if present (silently ignored when absent, e.g. inside Docker)
+	_ = godotenv.Load()
+
+	var missing []string
+	requireEnv := func(key string) string {
+		v := os.Getenv(key)
+		if v == "" {
+			missing = append(missing, key)
+		}
+		return v
+	}
+
+	cfg := &Config{
+		// Required (secrets)
+		DatabaseURL:     requireEnv("DATABASE_URL"),
+		BitbucketEmail:  requireEnv("BITBUCKET_EMAIL"),
+		BitbucketAPIToken: requireEnv("BITBUCKET_API_TOKEN"),
+		OpenAIAPIKey:    requireEnv("OPENAI_API_KEY"),
+
+		// Optional (safe defaults)
 		Port:            getEnv("PORT", "8080"),
-		DatabaseURL:     getEnv("DATABASE_URL", ""),
 		FrontendURL:     getEnv("FRONTEND_URL", "http://localhost:3000"),
 		LogLevel:        getEnv("LOG_LEVEL", "info"),
 		ShutdownTimeout: parseDuration(getEnv("SHUTDOWN_TIMEOUT", "30s"), 30*time.Second),
 
-		BitbucketBaseURL:  getEnv("BITBUCKET_BASE_URL", "https://api.bitbucket.org/2.0"),
-		BitbucketEmail:    getEnv("BITBUCKET_EMAIL", ""),
-		BitbucketAPIToken: getEnv("BITBUCKET_API_TOKEN", ""),
-		BitbucketTimeout:  parseDuration(getEnv("BITBUCKET_TIMEOUT", "30s"), 30*time.Second),
+		BitbucketBaseURL: getEnv("BITBUCKET_BASE_URL", "https://api.bitbucket.org/2.0"),
+		BitbucketTimeout: parseDuration(getEnv("BITBUCKET_TIMEOUT", "30s"), 30*time.Second),
 
-		OpenAIAPIKey:         getEnv("OPENAI_API_KEY", ""),
 		OpenAIDefaultModel:   getEnv("OPENAI_DEFAULT_MODEL", "gpt-4o-mini"),
 		OpenAIComplexModel:   getEnv("OPENAI_COMPLEX_MODEL", "gpt-4o"),
 		OpenAIMaxTokens:      parseInt(getEnv("OPENAI_MAX_TOKENS", "1024"), 1024),
@@ -56,6 +75,12 @@ func Load() *Config {
 		DBMaxConns:   parseInt(getEnv("DB_MAX_CONNS", "25"), 25),
 		DBMinConns:   parseInt(getEnv("DB_MIN_CONNS", "5"), 5),
 	}
+
+	if len(missing) > 0 {
+		return nil, fmt.Errorf("missing required environment variables: %s", strings.Join(missing, ", "))
+	}
+
+	return cfg, nil
 }
 
 func getEnv(key, fallback string) string {

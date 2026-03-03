@@ -11,10 +11,10 @@ export interface TabConfig {
 }
 
 export const tabs: TabConfig[] = [
-  { id: 'commit', label: 'Commit', icon: <GitCommitHorizontal size={18} />, placeholder: { title: 'Análise de Commit', subtitle: 'Em breve — Fase 4' } },
-  { id: 'range', label: 'Range', icon: <GitBranch size={18} />, placeholder: { title: 'Análise de Range', subtitle: 'Em breve — Fase 4' } },
-  { id: 'pr', label: 'PR', icon: <GitPullRequest size={18} />, placeholder: { title: 'Análise de PR', subtitle: 'Em breve — Fase 4' } },
-  { id: 'refine', label: 'Refinar', icon: <RefreshCw size={18} />, placeholder: { title: 'Refinar Descrição', subtitle: 'Em breve — Fase 5' } },
+  { id: 'commit', label: 'Commit', icon: <GitCommitHorizontal size={16} />, placeholder: { title: 'Analise de Commit', subtitle: 'Commit individual' } },
+  { id: 'range', label: 'Range', icon: <GitBranch size={16} />, placeholder: { title: 'Analise de Range', subtitle: 'Intervalo de commits' } },
+  { id: 'pr', label: 'Pull Request', icon: <GitPullRequest size={16} />, placeholder: { title: 'Analise de PR', subtitle: 'Pull request' } },
+  { id: 'refine', label: 'Refinar', icon: <RefreshCw size={16} />, placeholder: { title: 'Refinar Descricao', subtitle: 'Ajustar resultado' } },
 ]
 
 interface TabNavigationProps {
@@ -24,7 +24,7 @@ interface TabNavigationProps {
 
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
-    <nav className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700" role="tablist">
+    <nav className="flex gap-0.5 overflow-x-auto border-b border-stone-200 px-2 dark:border-white/[0.06]" role="tablist">
       {tabs.map((tab) => (
         <TabButton
           key={tab.id}

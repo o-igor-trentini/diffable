@@ -14,52 +14,61 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 describe('CommitForm', () => {
-  it('renders all fields', () => {
+  it('renders bitbucket mode fields by default', () => {
     renderWithQuery(<CommitForm onSubmit={vi.fn()} isPending={false} />)
 
     expect(screen.getByLabelText('Workspace')).toBeInTheDocument()
-    expect(screen.getByLabelText('Repositório')).toBeInTheDocument()
+    expect(screen.getByLabelText('Repositorio')).toBeInTheDocument()
     expect(screen.getByLabelText('Hash do Commit')).toBeInTheDocument()
-    expect(screen.getByLabelText('Diff (raw)')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nível da Descrição')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeInTheDocument()
   })
 
   it('disables submit button when no fields filled', () => {
     renderWithQuery(<CommitForm onSubmit={vi.fn()} isPending={false} />)
 
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeDisabled()
   })
 
-  it('enables submit button when raw diff is filled', async () => {
+  it('shows diff field when switching to manual mode', async () => {
     const user = userEvent.setup()
     renderWithQuery(<CommitForm onSubmit={vi.fn()} isPending={false} />)
 
-    await user.type(screen.getByLabelText('Diff (raw)'), 'diff --git a/main.go')
+    await user.click(screen.getByText('Colar Diff'))
 
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeEnabled()
+    expect(screen.getByLabelText('Diff')).toBeInTheDocument()
   })
 
-  it('submits with raw_diff and level when raw diff is filled', async () => {
+  it('enables submit button when raw diff is filled in manual mode', async () => {
+    const user = userEvent.setup()
+    renderWithQuery(<CommitForm onSubmit={vi.fn()} isPending={false} />)
+
+    await user.click(screen.getByText('Colar Diff'))
+    await user.type(screen.getByLabelText('Diff'), 'diff --git a/main.go')
+
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeEnabled()
+  })
+
+  it('submits with raw_diff and level in manual mode', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     renderWithQuery(<CommitForm onSubmit={onSubmit} isPending={false} />)
 
-    await user.type(screen.getByLabelText('Diff (raw)'), 'diff --git a/main.go')
-    await user.click(screen.getByRole('button', { name: /gerar descrição/i }))
+    await user.click(screen.getByText('Colar Diff'))
+    await user.type(screen.getByLabelText('Diff'), 'diff --git a/main.go')
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
 
     expect(onSubmit).toHaveBeenCalledWith({ raw_diff: 'diff --git a/main.go', level: 'functional' })
   })
 
-  it('submits with hash and level when workspace/repo/hash filled', async () => {
+  it('submits with hash and level in bitbucket mode', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     renderWithQuery(<CommitForm onSubmit={onSubmit} isPending={false} />)
 
     await user.type(screen.getByLabelText('Workspace'), 'ws')
-    await user.type(screen.getByLabelText('Repositório'), 'repo')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
     await user.type(screen.getByLabelText('Hash do Commit'), 'abc123')
-    await user.click(screen.getByRole('button', { name: /gerar descrição/i }))
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
 
     expect(onSubmit).toHaveBeenCalledWith({
       workspace: 'ws',
@@ -73,15 +82,7 @@ describe('CommitForm', () => {
     renderWithQuery(<CommitForm onSubmit={vi.fn()} isPending={true} />)
 
     expect(screen.getByLabelText('Workspace')).toBeDisabled()
-    expect(screen.getByLabelText('Repositório')).toBeDisabled()
+    expect(screen.getByLabelText('Repositorio')).toBeDisabled()
     expect(screen.getByLabelText('Hash do Commit')).toBeDisabled()
-    expect(screen.getByLabelText('Diff (raw)')).toBeDisabled()
-  })
-
-  it('level select defaults to functional', () => {
-    renderWithQuery(<CommitForm onSubmit={vi.fn()} isPending={false} />)
-
-    const select = screen.getByLabelText('Nível da Descrição') as HTMLSelectElement
-    expect(select.value).toBe('functional')
   })
 })

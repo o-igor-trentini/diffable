@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react'
 import { RefineForm } from './RefineForm'
 import { CopyButton } from '../shared/CopyButton'
 import { ErrorAlert } from '../shared/ErrorAlert'
@@ -18,10 +19,15 @@ export function RefineDescription({ analysis }: RefineDescriptionProps) {
 
   if (!analysis) {
     return (
-      <div className="py-12 text-center text-gray-500 dark:text-gray-400">
-        <p className="text-lg font-medium">Refinar Descrição</p>
-        <p className="mt-1 text-sm">
-          Gere uma descrição primeiro e clique em &quot;Refinar&quot; para ajustá-la.
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-white/[0.04]">
+          <RefreshCw size={20} className="text-stone-300 dark:text-stone-600" />
+        </div>
+        <p className="mt-4 text-sm font-medium text-stone-500 dark:text-stone-400">
+          Nenhuma descricao para refinar
+        </p>
+        <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+          Gere uma descricao em qualquer aba e clique em &quot;Refinar&quot; para ajusta-la aqui.
         </p>
       </div>
     )
@@ -38,19 +44,21 @@ export function RefineDescription({ analysis }: RefineDescriptionProps) {
       {isError && <ErrorAlert message={error.message} />}
 
       {data && (
-        <div className="mt-6 animate-in fade-in duration-300 rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-700/50">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Descrição Refinada</h3>
+        <div className="animate-fade-up mt-6 rounded-xl border border-stone-200 bg-white p-5 dark:border-white/[0.06] dark:bg-white/[0.02]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">
+              Descricao Refinada
+            </h3>
             <CopyButton text={data.refined_description} />
           </div>
 
-          <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+          <div className="mt-4 whitespace-pre-wrap rounded-lg bg-stone-50 p-4 font-mono text-[13px] leading-relaxed text-stone-700 dark:bg-white/[0.03] dark:text-stone-300">
             {data.refined_description}
           </div>
 
-          <div className="mt-4 flex items-center gap-4 border-t border-gray-200 pt-3 text-xs text-gray-500 dark:border-gray-600 dark:text-gray-400">
-            <span>Modelo: {data.model_used}</span>
-            <span>Tokens: {data.tokens_used}</span>
+          <div className="mt-4 flex items-center gap-3 border-t border-stone-100 pt-3 text-xs text-stone-400 dark:border-white/[0.04] dark:text-stone-500">
+            <span className="font-mono">{data.model_used}</span>
+            <span>{data.tokens_used} tokens</span>
           </div>
         </div>
       )}

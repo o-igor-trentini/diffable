@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: diffable
-      POSTGRES_PASSWORD: diffable
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: diffable
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata-dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U diffable"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -20,7 +20,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: build
-    command: go run github.com/air-verse/air@latest -c .air.toml
+    command: go run github.com/air-verse/air@v1.61.7 -c .air.toml
     ports:
       - "8080:8080"
     depends_on:
@@ -28,10 +28,12 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
     environment:
-      PORT: "8080"
-      DATABASE_URL: "postgres://diffable:diffable@db:5432/diffable?sslmode=disable"
-      FRONTEND_URL: "http://localhost:3000"
+      # Overrides .env value: uses Docker network hostname "db" instead of localhost
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/diffable?sslmode=disable"
+      # More verbose logging for development
       LOG_LEVEL: "debug"
 
   frontend:
@@ -47,6 +49,7 @@ services:
       - frontend_node_modules:/app/node_modules
     environment:
       VITE_API_URL: "/api/v1"
+      VITE_API_PROXY_TARGET: "http://backend:8080"
 
 volumes:
   pgdata-dev:

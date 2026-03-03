@@ -3,7 +3,7 @@ import { Download, Check } from 'lucide-react'
 import type { AnalysisResponse } from '@/lib/api/types'
 
 const levelLabels: Record<string, string> = {
-  technical: 'Técnico',
+  technical: 'Tecnico',
   functional: 'Funcional',
   executive: 'Executivo',
 }
@@ -26,12 +26,12 @@ export function ExportMarkdownButton({ result }: ExportMarkdownButtonProps) {
     const level = levelLabels[result.level] || result.level
     const type = typeLabels[result.type] || result.type
 
-    const content = `# Descrição Gerada - Diffable
+    const content = `# Descricao Gerada - Diffable
 
 | Campo | Valor |
 |-------|-------|
 | Tipo | ${type} |
-| Nível | ${level} |
+| Nivel | ${level} |
 | Modelo | ${result.model_used} |
 | Tokens | ${result.tokens_used} |
 | Data | ${date} |
@@ -58,17 +58,17 @@ ${result.description}
   return (
     <button
       onClick={handleExport}
-      className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 transition-colors dark:text-gray-300 dark:hover:bg-gray-600"
+      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-white/[0.06] dark:hover:text-stone-200"
       title={exported ? 'Exportado!' : 'Exportar Markdown'}
     >
       {exported ? (
         <>
-          <Check size={16} className="text-green-600 dark:text-green-400" />
-          <span className="text-green-600 dark:text-green-400">Exportado!</span>
+          <Check size={14} className="text-emerald-500" />
+          <span className="text-emerald-600 dark:text-emerald-400">Exportado!</span>
         </>
       ) : (
         <>
-          <Download size={16} />
+          <Download size={14} />
           <span>Exportar</span>
         </>
       )}

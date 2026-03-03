@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: diffable
-      POSTGRES_PASSWORD: diffable
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: diffable
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U diffable"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -35,15 +35,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - ./backend/.env
     environment:
-      PORT: "8080"
-      DATABASE_URL: "postgres://diffable:diffable@db:5432/diffable?sslmode=disable"
-      FRONTEND_URL: "http://localhost:3000"
-      LOG_LEVEL: "info"
-      RATE_LIMIT_RPM: "60"
-      DB_MAX_CONNS: "25"
-      DB_MIN_CONNS: "5"
-      SHUTDOWN_TIMEOUT: "30s"
+      # Overrides .env value: uses Docker network hostname "db" instead of localhost
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/diffable?sslmode=disable"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
       interval: 10s

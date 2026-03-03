@@ -27,7 +27,11 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "FATAL: configuration error: %v\n", err)
+		os.Exit(1)
+	}
 	setupLogger(cfg.LogLevel)
 
 	slog.Info("starting diffable backend", "port", cfg.Port)

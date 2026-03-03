@@ -34,3 +34,6 @@ docker-compose.override.yml
 coverage/
 *.coverprofile
 coverage.out
+
+# Binário
+backend/server

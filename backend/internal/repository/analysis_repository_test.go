@@ -19,7 +19,7 @@ func setupTestDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 
 	ctx := context.Background()
-	dsn := "postgres://diffable:diffable@localhost:5432/diffable_test?sslmode=disable"
+	dsn := "postgres://postgres:postgres@localhost:5432/diffable_test?sslmode=disable"
 
 	pool, err := pgxpool.New(ctx, dsn)
 	require.NoError(t, err)

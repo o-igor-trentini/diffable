@@ -44,7 +44,6 @@ export function App() {
   }
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Ctrl+Enter: submit active form
     if (e.ctrlKey && e.key === 'Enter') {
       const form = document.querySelector('form')
       if (form) {
@@ -55,7 +54,6 @@ export function App() {
       }
     }
 
-    // Ctrl+Shift+C: copy result
     if (e.ctrlKey && e.shiftKey && e.key === 'C') {
       const copyBtn = document.querySelector('[data-copy-button]') as HTMLButtonElement | null
       if (copyBtn) {
@@ -84,15 +82,14 @@ export function App() {
 
   return (
     <Layout dark={dark} onToggleDark={() => setDark((d) => !d)}>
-      <div className="rounded-lg bg-white shadow dark:bg-gray-800">
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-
-        <div className="p-4 sm:p-6">
-          {renderTab()}
+      <div className="space-y-6">
+        <div className="rounded-xl border border-stone-200 bg-white shadow-sm dark:border-white/[0.06] dark:bg-white/[0.02] dark:shadow-none">
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          <div className="p-5 sm:p-6">
+            {renderTab()}
+          </div>
         </div>
-      </div>
 
-      <div className="mt-4">
         <HistoryPanel onSelect={handleHistorySelect} />
       </div>
     </Layout>

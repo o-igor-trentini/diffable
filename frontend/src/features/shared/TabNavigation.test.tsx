@@ -9,14 +9,14 @@ describe('TabNavigation', () => {
 
     expect(screen.getByText('Commit')).toBeInTheDocument()
     expect(screen.getByText('Range')).toBeInTheDocument()
-    expect(screen.getByText('PR')).toBeInTheDocument()
+    expect(screen.getByText('Pull Request')).toBeInTheDocument()
     expect(screen.getByText('Refinar')).toBeInTheDocument()
   })
 
   it('marks the active tab with aria-selected', () => {
     render(<TabNavigation activeTab="pr" onTabChange={() => {}} />)
 
-    const prTab = screen.getByText('PR').closest('button')
+    const prTab = screen.getByText('Pull Request').closest('button')
     const commitTab = screen.getByText('Commit').closest('button')
 
     expect(prTab).toHaveAttribute('aria-selected', 'true')

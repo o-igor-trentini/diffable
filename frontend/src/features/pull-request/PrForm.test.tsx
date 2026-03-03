@@ -14,22 +14,19 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 describe('PrForm', () => {
-  it('renders all fields', () => {
+  it('renders bitbucket mode fields by default', () => {
     renderWithQuery(<PrForm onSubmit={vi.fn()} isPending={false} />)
 
     expect(screen.getByLabelText('Workspace')).toBeInTheDocument()
-    expect(screen.getByLabelText('Repositório')).toBeInTheDocument()
-    expect(screen.getByLabelText('PR ID')).toBeInTheDocument()
-    expect(screen.getByLabelText('Diff (raw)')).toBeInTheDocument()
-    expect(screen.getByLabelText('Título do PR')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nível da Descrição')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeInTheDocument()
+    expect(screen.getByLabelText('Repositorio')).toBeInTheDocument()
+    expect(screen.getByLabelText('Numero do PR')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeInTheDocument()
   })
 
   it('disables submit when no fields filled', () => {
     renderWithQuery(<PrForm onSubmit={vi.fn()} isPending={false} />)
 
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeDisabled()
   })
 
   it('enables submit when workspace/repo/pr_id filled', async () => {
@@ -37,10 +34,10 @@ describe('PrForm', () => {
     renderWithQuery(<PrForm onSubmit={vi.fn()} isPending={false} />)
 
     await user.type(screen.getByLabelText('Workspace'), 'ws')
-    await user.type(screen.getByLabelText('Repositório'), 'repo')
-    await user.type(screen.getByLabelText('PR ID'), '42')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
+    await user.type(screen.getByLabelText('Numero do PR'), '42')
 
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeEnabled()
   })
 
   it('submits with PR ID and level', async () => {
@@ -49,9 +46,9 @@ describe('PrForm', () => {
     renderWithQuery(<PrForm onSubmit={onSubmit} isPending={false} />)
 
     await user.type(screen.getByLabelText('Workspace'), 'ws')
-    await user.type(screen.getByLabelText('Repositório'), 'repo')
-    await user.type(screen.getByLabelText('PR ID'), '42')
-    await user.click(screen.getByRole('button', { name: /gerar descrição/i }))
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
+    await user.type(screen.getByLabelText('Numero do PR'), '42')
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
 
     expect(onSubmit).toHaveBeenCalledWith({
       workspace: 'ws',
@@ -61,13 +58,14 @@ describe('PrForm', () => {
     })
   })
 
-  it('enables submit when raw diff + PR title filled', async () => {
+  it('enables submit when raw diff + PR title filled in manual mode', async () => {
     const user = userEvent.setup()
     renderWithQuery(<PrForm onSubmit={vi.fn()} isPending={false} />)
 
-    await user.type(screen.getByLabelText('Diff (raw)'), 'diff --git a/main.go')
-    await user.type(screen.getByLabelText('Título do PR'), 'My PR')
+    await user.click(screen.getByText('Colar Diff'))
+    await user.type(screen.getByLabelText('Titulo do PR'), 'My PR')
+    await user.type(screen.getByLabelText('Diff'), 'diff --git a/main.go')
 
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeEnabled()
   })
 })

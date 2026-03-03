@@ -11,14 +11,17 @@ export function TabButton({ active, icon, label, onClick }: TabButtonProps) {
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className={`flex shrink-0 items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+      className={`relative flex shrink-0 items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
         active
-          ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
+          ? 'text-violet-700 dark:text-violet-300'
+          : 'text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300'
       }`}
     >
-      {icon}
+      <span className={active ? 'text-violet-600 dark:text-violet-400' : ''}>{icon}</span>
       {label}
+      {active && (
+        <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-gradient-to-r from-violet-600 to-cyan-500" />
+      )}
     </button>
   )
 }

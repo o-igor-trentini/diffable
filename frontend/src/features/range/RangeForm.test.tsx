@@ -18,17 +18,16 @@ describe('RangeForm', () => {
     renderWithQuery(<RangeForm onSubmit={vi.fn()} isPending={false} />)
 
     expect(screen.getByLabelText('Workspace')).toBeInTheDocument()
-    expect(screen.getByLabelText('Repositório')).toBeInTheDocument()
+    expect(screen.getByLabelText('Repositorio')).toBeInTheDocument()
     expect(screen.getByLabelText('Hash Inicial (from)')).toBeInTheDocument()
     expect(screen.getByLabelText('Hash Final (to)')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nível da Descrição')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeInTheDocument()
   })
 
   it('disables submit when fields are empty', () => {
     renderWithQuery(<RangeForm onSubmit={vi.fn()} isPending={false} />)
 
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeDisabled()
   })
 
   it('enables submit when all fields are filled', async () => {
@@ -36,11 +35,11 @@ describe('RangeForm', () => {
     renderWithQuery(<RangeForm onSubmit={vi.fn()} isPending={false} />)
 
     await user.type(screen.getByLabelText('Workspace'), 'ws')
-    await user.type(screen.getByLabelText('Repositório'), 'repo')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
     await user.type(screen.getByLabelText('Hash Inicial (from)'), 'abc')
     await user.type(screen.getByLabelText('Hash Final (to)'), 'def')
 
-    expect(screen.getByRole('button', { name: /gerar descrição/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeEnabled()
   })
 
   it('submits with all fields including level', async () => {
@@ -49,10 +48,10 @@ describe('RangeForm', () => {
     renderWithQuery(<RangeForm onSubmit={onSubmit} isPending={false} />)
 
     await user.type(screen.getByLabelText('Workspace'), 'ws')
-    await user.type(screen.getByLabelText('Repositório'), 'repo')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
     await user.type(screen.getByLabelText('Hash Inicial (from)'), 'abc123')
     await user.type(screen.getByLabelText('Hash Final (to)'), 'def456')
-    await user.click(screen.getByRole('button', { name: /gerar descrição/i }))
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
 
     expect(onSubmit).toHaveBeenCalledWith({
       workspace: 'ws',

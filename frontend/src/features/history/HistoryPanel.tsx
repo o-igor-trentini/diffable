@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { History, ChevronLeft, ChevronRight } from 'lucide-react'
+import { History, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import { HistoryItem } from './HistoryItem'
 import { LoadingSpinner } from '../shared/LoadingSpinner'
 import { useAnalysesList } from '@/lib/hooks/useHistory'
@@ -19,101 +19,102 @@ const typeOptions = [
 const PAGE_SIZE = 10
 
 export function HistoryPanel({ onSelect }: HistoryPanelProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   const [typeFilter, setTypeFilter] = useState('')
   const [page, setPage] = useState(1)
 
   const { data, isLoading } = useAnalysesList(
-    open ? { type: typeFilter || undefined, page, page_size: PAGE_SIZE } : undefined,
+    { type: typeFilter || undefined, page, page_size: PAGE_SIZE },
   )
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors dark:text-gray-400 dark:hover:bg-gray-700"
-      >
-        <History size={16} />
-        Histórico
-      </button>
-    )
-  }
-
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <div className="flex items-center gap-2">
-          <History size={16} className="text-gray-500 dark:text-gray-400" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Histórico</span>
-        </div>
-        <button
-          onClick={() => setOpen(false)}
-          className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          Fechar
-        </button>
-      </div>
-
-      <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
-        <div className="flex flex-wrap gap-1">
-          {typeOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => { setTypeFilter(opt.value); setPage(1) }}
-              className={`rounded-md px-2 py-1 text-xs transition-colors ${
-                typeFilter === opt.value
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
-                  : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="max-h-80 overflow-y-auto p-2">
-        {isLoading && (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner />
-          </div>
-        )}
-
-        {!isLoading && data && data.data.length === 0 && (
-          <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-            Nenhuma análise encontrada
-          </p>
-        )}
-
-        {!isLoading && data && data.data.map((analysis) => (
-          <HistoryItem key={analysis.id} analysis={analysis} onClick={onSelect} />
-        ))}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2 dark:border-gray-700">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:disabled:text-gray-600"
-          >
-            <ChevronLeft size={14} />
-            Anterior
-          </button>
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            {page} / {totalPages}
+    <div className="rounded-xl border border-stone-200 bg-white dark:border-white/[0.06] dark:bg-white/[0.02]">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-5 py-3.5 text-left"
+      >
+        <div className="flex items-center gap-2.5">
+          <History size={16} className="text-stone-400 dark:text-stone-500" />
+          <span className="text-sm font-semibold text-stone-700 dark:text-stone-300">
+            Historico de Analises
           </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:disabled:text-gray-600"
-          >
-            Próximo
-            <ChevronRight size={14} />
-          </button>
+          {data && data.total > 0 && (
+            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-medium text-stone-500 dark:bg-white/[0.06] dark:text-stone-400">
+              {data.total}
+            </span>
+          )}
         </div>
+        {open ? (
+          <ChevronUp size={16} className="text-stone-400 dark:text-stone-500" />
+        ) : (
+          <ChevronDown size={16} className="text-stone-400 dark:text-stone-500" />
+        )}
+      </button>
+
+      {open && (
+        <>
+          <div className="border-t border-stone-100 px-5 py-2.5 dark:border-white/[0.04]">
+            <div className="flex flex-wrap gap-1">
+              {typeOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setTypeFilter(opt.value); setPage(1) }}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                    typeFilter === opt.value
+                      ? 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
+                      : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:text-stone-500 dark:hover:bg-white/[0.06] dark:hover:text-stone-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="max-h-80 overflow-y-auto border-t border-stone-100 px-2 py-1 dark:border-white/[0.04]">
+            {isLoading && (
+              <div className="flex justify-center py-10">
+                <LoadingSpinner />
+              </div>
+            )}
+
+            {!isLoading && data && data.data.length === 0 && (
+              <p className="py-10 text-center text-sm text-stone-400 dark:text-stone-500">
+                Nenhuma analise encontrada
+              </p>
+            )}
+
+            {!isLoading && data && data.data.map((analysis) => (
+              <HistoryItem key={analysis.id} analysis={analysis} onClick={onSelect} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-stone-100 px-5 py-2.5 dark:border-white/[0.04]">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="inline-flex items-center gap-1 text-xs font-medium text-stone-400 hover:text-stone-600 disabled:text-stone-200 dark:text-stone-500 dark:hover:text-stone-300 dark:disabled:text-stone-700"
+              >
+                <ChevronLeft size={14} />
+                Anterior
+              </button>
+              <span className="font-mono text-xs text-stone-400 dark:text-stone-500">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="inline-flex items-center gap-1 text-xs font-medium text-stone-400 hover:text-stone-600 disabled:text-stone-200 dark:text-stone-500 dark:hover:text-stone-300 dark:disabled:text-stone-700"
+              >
+                Proximo
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
