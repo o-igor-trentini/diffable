@@ -18,13 +18,17 @@ type Config struct {
 	BitbucketAPIToken string
 	BitbucketTimeout  time.Duration
 
-	OpenAIAPIKey        string
-	OpenAIDefaultModel  string
-	OpenAIComplexModel  string
-	OpenAIMaxTokens     int
-	OpenAITemperature   float64
+	OpenAIAPIKey         string
+	OpenAIDefaultModel   string
+	OpenAIComplexModel   string
+	OpenAIMaxTokens      int
+	OpenAITemperature    float64
 	OpenAITokenThreshold int
-	CacheTTL            time.Duration
+	CacheTTL             time.Duration
+
+	RateLimitRPM int
+	DBMaxConns   int
+	DBMinConns   int
 }
 
 func Load() *Config {
@@ -47,6 +51,10 @@ func Load() *Config {
 		OpenAITemperature:    parseFloat(getEnv("OPENAI_TEMPERATURE", "0.3"), 0.3),
 		OpenAITokenThreshold: parseInt(getEnv("OPENAI_TOKEN_THRESHOLD", "4000"), 4000),
 		CacheTTL:             parseDuration(getEnv("CACHE_TTL", "24h"), 24*time.Hour),
+
+		RateLimitRPM: parseInt(getEnv("RATE_LIMIT_RPM", "60"), 60),
+		DBMaxConns:   parseInt(getEnv("DB_MAX_CONNS", "25"), 25),
+		DBMinConns:   parseInt(getEnv("DB_MIN_CONNS", "5"), 5),
 	}
 }
 

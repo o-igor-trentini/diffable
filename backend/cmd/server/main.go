@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -30,7 +31,20 @@ func main() {
 
 	slog.Info("starting diffable backend", "port", cfg.Port)
 
-	pool, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
+	// Database connection pool with tuning
+	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("failed to parse database URL", "error", err)
+		os.Exit(1)
+	}
+
+	poolConfig.MaxConns = int32(cfg.DBMaxConns)
+	poolConfig.MinConns = int32(cfg.DBMinConns)
+	poolConfig.MaxConnLifetime = 30 * time.Minute
+	poolConfig.MaxConnIdleTime = 5 * time.Minute
+	poolConfig.HealthCheckPeriod = 1 * time.Minute
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		slog.Error("failed to connect to database", "error", err)
 		os.Exit(1)
@@ -41,7 +55,10 @@ func main() {
 		slog.Error("failed to ping database", "error", err)
 		os.Exit(1)
 	}
-	slog.Info("connected to database")
+	slog.Info("connected to database",
+		"max_conns", cfg.DBMaxConns,
+		"min_conns", cfg.DBMinConns,
+	)
 
 	if err := runMigrations(cfg.DatabaseURL); err != nil {
 		slog.Error("failed to run migrations", "error", err)
@@ -79,7 +96,7 @@ func main() {
 	historySvc := service.NewHistoryService(analysisRepo)
 
 	// Server
-	srv := server.New(pool, cfg.FrontendURL, analysisSvc, refinementSvc, historySvc)
+	srv := server.New(pool, cfg.FrontendURL, cfg.RateLimitRPM, analysisSvc, refinementSvc, historySvc)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
@@ -96,9 +113,11 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	sig := <-quit
 
-	slog.Info("shutting down server")
+	slog.Info("received shutdown signal", "signal", sig.String())
+	slog.Info("shutting down server, draining active connections...")
+
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	defer cancel()
 
@@ -106,7 +125,9 @@ func main() {
 		slog.Error("server forced to shutdown", "error", err)
 	}
 
-	slog.Info("server stopped")
+	pool.Close()
+	slog.Info("database connections closed")
+	slog.Info("server stopped gracefully")
 }
 
 func setupLogger(level string) {

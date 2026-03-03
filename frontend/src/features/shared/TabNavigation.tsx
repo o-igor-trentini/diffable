@@ -24,7 +24,7 @@ interface TabNavigationProps {
 
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
-    <nav className="flex border-b border-gray-200" role="tablist">
+    <nav className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700" role="tablist">
       {tabs.map((tab) => (
         <TabButton
           key={tab.id}

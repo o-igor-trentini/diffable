@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -136,9 +137,17 @@ func (h *AnalysisHandler) handleServiceError(w http.ResponseWriter, err error) {
 		writeErrorJSON(w, http.StatusNotFound, "not_found", err.Error())
 	case errors.Is(err, domain.ErrValidation):
 		writeErrorJSON(w, http.StatusBadRequest, "validation_error", err.Error())
+	case errors.Is(err, domain.ErrRateLimited):
+		w.Header().Set("Retry-After", "60")
+		writeErrorJSON(w, http.StatusTooManyRequests, "rate_limited", "Too many requests. Please try again later.")
+	case errors.Is(err, domain.ErrTokenLimitExceeded):
+		writeErrorJSON(w, http.StatusUnprocessableEntity, "token_limit_exceeded", err.Error())
+	case errors.Is(err, domain.ErrTimeout):
+		writeErrorJSON(w, http.StatusGatewayTimeout, "timeout", "The request timed out. Please try again.")
 	case errors.Is(err, domain.ErrExternalService):
-		writeErrorJSON(w, http.StatusBadGateway, "external_service_error", err.Error())
+		writeErrorJSON(w, http.StatusBadGateway, "external_service_error", "An external service is unavailable. Please try again later.")
 	default:
+		slog.Error("unhandled error", "error", err)
 		writeErrorJSON(w, http.StatusInternalServerError, "internal_error", "An unexpected error occurred")
 	}
 }

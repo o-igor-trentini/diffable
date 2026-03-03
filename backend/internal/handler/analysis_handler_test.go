@@ -233,3 +233,56 @@ func TestAnalyzeCommit_ExternalServiceError_Returns502(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadGateway, w.Code)
 }
+
+func TestHandleServiceError_RateLimited_Returns429(t *testing.T) {
+	svc := &mockAnalysisService{err: domain.ErrRateLimited}
+	h := NewAnalysisHandler(svc, nil)
+
+	body, _ := json.Marshal(dto.AnalyzeCommitRequest{RawDiff: "diff --git a/main.go"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.AnalyzeCommit(w, req)
+
+	assert.Equal(t, http.StatusTooManyRequests, w.Code)
+	assert.Equal(t, "60", w.Header().Get("Retry-After"))
+}
+
+func TestHandleServiceError_Timeout_Returns504(t *testing.T) {
+	svc := &mockAnalysisService{err: domain.ErrTimeout}
+	h := NewAnalysisHandler(svc, nil)
+
+	body, _ := json.Marshal(dto.AnalyzeCommitRequest{RawDiff: "diff --git a/main.go"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.AnalyzeCommit(w, req)
+
+	assert.Equal(t, http.StatusGatewayTimeout, w.Code)
+}
+
+func TestHandleServiceError_TokenLimitExceeded_Returns422(t *testing.T) {
+	svc := &mockAnalysisService{err: domain.ErrTokenLimitExceeded}
+	h := NewAnalysisHandler(svc, nil)
+
+	body, _ := json.Marshal(dto.AnalyzeCommitRequest{RawDiff: "diff --git a/main.go"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.AnalyzeCommit(w, req)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+}
+
+func TestHandleServiceError_ValidationError_Returns400(t *testing.T) {
+	svc := &mockAnalysisService{err: domain.ErrValidation}
+	h := NewAnalysisHandler(svc, nil)
+
+	body, _ := json.Marshal(dto.AnalyzeCommitRequest{RawDiff: "diff --git a/main.go"})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	h.AnalyzeCommit(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}

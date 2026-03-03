@@ -78,9 +78,9 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
       </div>
 
       <div className="relative flex items-center py-2">
-        <div className="flex-grow border-t border-gray-300" />
-        <span className="mx-4 shrink-0 text-xs text-gray-500">OU cole o diff manualmente</span>
-        <div className="flex-grow border-t border-gray-300" />
+        <div className="flex-grow border-t border-gray-300 dark:border-gray-600" />
+        <span className="mx-4 shrink-0 text-xs text-gray-500 dark:text-gray-400">OU cole o diff manualmente</span>
+        <div className="flex-grow border-t border-gray-300 dark:border-gray-600" />
       </div>
 
       <TextArea

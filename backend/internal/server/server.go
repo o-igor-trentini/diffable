@@ -18,7 +18,7 @@ type Server struct {
 	HistoryHandler  *handler.HistoryHandler
 }
 
-func New(db handler.DBPinger, frontendURL string, analysisSvc service.AnalysisService, refineSvc service.RefinementService, historySvc service.HistoryService) *Server {
+func New(db handler.DBPinger, frontendURL string, rateLimitRPM int, analysisSvc service.AnalysisService, refineSvc service.RefinementService, historySvc service.HistoryService) *Server {
 	s := &Server{
 		Router:          chi.NewRouter(),
 		HealthHandler:   handler.NewHealthHandler(db),
@@ -26,12 +26,17 @@ func New(db handler.DBPinger, frontendURL string, analysisSvc service.AnalysisSe
 		HistoryHandler:  handler.NewHistoryHandler(historySvc),
 	}
 
-	s.Router.Use(chimw.RequestID)
+	// Custom request ID middleware (replaces chi's)
+	s.Router.Use(middleware.RequestID)
 	s.Router.Use(chimw.RealIP)
 	s.Router.Use(middleware.Logging)
 	s.Router.Use(chimw.Recoverer)
 	s.Router.Use(middleware.CORS(frontendURL))
 	s.Router.Use(chimw.Timeout(30 * time.Second))
+
+	// Rate limiting
+	rl := middleware.NewRateLimiter(rateLimitRPM)
+	s.Router.Use(rl.Handler)
 
 	s.RegisterRoutes()
 
