@@ -10,7 +10,7 @@
 
 ### Estrutura e Configuração
 
-- [ ] Criar `backend/go.mod` com módulo `github.com/igor-trentini/bb-gen-desc/backend`
+- [ ] Criar `backend/go.mod` com módulo `github.com/igor-trentini/diffable/backend`
 - [ ] Criar `backend/cmd/server/main.go` — entry point: carrega config, conecta DB, roda migrations, inicia servidor HTTP
 - [ ] Criar `backend/internal/config/config.go` — carrega variáveis de ambiente com defaults:
   - `PORT` (default: 8080)

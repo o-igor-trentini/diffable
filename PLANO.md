@@ -1,4 +1,4 @@
-# BB-Gen-Desc: Plano de Implementação
+# DIFFABLE: Plano de Implementação
 
 Plataforma fullstack (React + Go) para gerar descrições automáticas de commits e PRs do Bitbucket Cloud, usando OpenAI para geração de texto focado em QA/PO e JIRA.
 

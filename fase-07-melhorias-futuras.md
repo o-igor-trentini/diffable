@@ -156,7 +156,7 @@
 
 ### Checklist
 
-- [ ] Criar CLI tool: `bb-gen-desc-cli`:
+- [ ] Criar CLI tool: `diffable`:
   - Flag `--workspace`, `--repo`, `--pr-id` ou `--commit-hash`
   - Flag `--api-url` para apontar para a plataforma
   - Flag `--output` para formato (text, json, markdown)
@@ -166,7 +166,7 @@
   - step:
       name: Generate PR Description
       script:
-        - bb-gen-desc-cli --api-url $BB_GEN_DESC_URL --workspace $BITBUCKET_WORKSPACE --repo $BITBUCKET_REPO_SLUG --pr-id $BITBUCKET_PR_ID
+        - diffable --api-url $BB_GEN_DESC_URL --workspace $BITBUCKET_WORKSPACE --repo $BITBUCKET_REPO_SLUG --pr-id $BITBUCKET_PR_ID
   ```
 - [ ] Documentar uso em CI/CD
 
