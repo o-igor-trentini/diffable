@@ -40,15 +40,15 @@ Atualmente os parametros de geracao da OpenAI (max_tokens, temperature, modelo) 
 
 **Arquivo:** `backend/internal/openai/generator.go`
 
-- [ ] Adicionar campos opcionais ao `GenerationInput`:
+- [x] Adicionar campos opcionais ao `GenerationInput`:
   - `MaxTokensOverride *int`
   - `TemperatureOverride *float64`
   - `ModelOverride *string`
-- [ ] Criar metodo helper `HasOverrides() bool` no `GenerationInput` que retorna true se qualquer override esta ativo (diferente de nil, e Model diferente de "auto")
-- [ ] Criar metodo `resolveModel(input GenerationInput, tokenCount int) string` no generator:
+- [x] Criar metodo helper `HasOverrides() bool` no `GenerationInput` que retorna true se qualquer override esta ativo (diferente de nil, e Model diferente de "auto")
+- [x] Criar metodo `resolveModel(input GenerationInput, tokenCount int) string` no generator:
   - Se `ModelOverride != nil && != "auto"` → retorna o modelo diretamente
   - Senao → delega para `SelectModel()` (comportamento atual)
-- [ ] Modificar metodo `Generate()`:
+- [x] Modificar metodo `Generate()`:
   - Resolver `maxTokens`: usar `input.MaxTokensOverride` se presente, senao `g.config.MaxTokens`
   - Resolver `temperature`: usar `float32(*input.TemperatureOverride)` se presente, senao `g.config.Temperature`
   - Resolver `model`: usar `resolveModel()` ao inves de `SelectModel()` direto

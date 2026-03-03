@@ -21,6 +21,23 @@ type GenerationInput struct {
 	PRTitle        string
 	PRDescription  string
 	Level          string
+
+	MaxTokensOverride   *int
+	TemperatureOverride *float64
+	ModelOverride       *string
+}
+
+func (i GenerationInput) HasOverrides() bool {
+	if i.MaxTokensOverride != nil {
+		return true
+	}
+	if i.TemperatureOverride != nil {
+		return true
+	}
+	if i.ModelOverride != nil && *i.ModelOverride != "auto" {
+		return true
+	}
+	return false
 }
 
 type GenerationOutput struct {
@@ -67,20 +84,42 @@ func NewGenerator(client ChatClient, c cache.Cache, cfg GeneratorConfig) Descrip
 	}
 }
 
+func (g *openaiGenerator) resolveModel(input GenerationInput, tokenCount int) string {
+	if input.ModelOverride != nil && *input.ModelOverride != "auto" {
+		return *input.ModelOverride
+	}
+	return SelectModel(g.modelCfg, tokenCount, input.AnalysisType)
+}
+
 func (g *openaiGenerator) Generate(ctx context.Context, input GenerationInput) (*GenerationOutput, error) {
 	level := input.Level
 	if level == "" {
 		level = "functional"
 	}
+
+	useCache := !input.HasOverrides()
+
 	cacheKey := cache.DiffCacheKey(input.Diff + ":" + level)
-	if cached, ok := g.cache.Get(cacheKey); ok {
-		slog.Debug("openai: cache hit", "key", cacheKey[:12])
-		return &GenerationOutput{Description: cached, Model: "cache"}, nil
+	if useCache {
+		if cached, ok := g.cache.Get(cacheKey); ok {
+			slog.Debug("openai: cache hit", "key", cacheKey[:12])
+			return &GenerationOutput{Description: cached, Model: "cache"}, nil
+		}
 	}
 
 	processed := PreprocessDiff(input.Diff)
 	tokenCount := CountTokens(processed, g.config.DefaultModel)
-	model := SelectModel(g.modelCfg, tokenCount, input.AnalysisType)
+	model := g.resolveModel(input, tokenCount)
+
+	maxTokens := g.config.MaxTokens
+	if input.MaxTokensOverride != nil {
+		maxTokens = *input.MaxTokensOverride
+	}
+
+	temperature := g.config.Temperature
+	if input.TemperatureOverride != nil {
+		temperature = float32(*input.TemperatureOverride)
+	}
 
 	messages := g.buildMessages(processed, input)
 
@@ -90,8 +129,8 @@ func (g *openaiGenerator) Generate(ctx context.Context, input GenerationInput) (
 		result, callErr = g.client.CreateChatCompletion(ctx, oai.ChatCompletionRequest{
 			Model:       model,
 			Messages:    messages,
-			MaxTokens:   g.config.MaxTokens,
-			Temperature: g.config.Temperature,
+			MaxTokens:   maxTokens,
+			Temperature: temperature,
 		})
 		return callErr
 	})
@@ -108,7 +147,9 @@ func (g *openaiGenerator) Generate(ctx context.Context, input GenerationInput) (
 		"analysis_type", input.AnalysisType,
 	)
 
-	g.cache.Set(cacheKey, description, g.config.CacheTTL)
+	if useCache {
+		g.cache.Set(cacheKey, description, g.config.CacheTTL)
+	}
 
 	return &GenerationOutput{
 		Description: description,
