@@ -18,6 +18,13 @@ func TestLoad_Defaults(t *testing.T) {
 	os.Unsetenv("BITBUCKET_EMAIL")
 	os.Unsetenv("BITBUCKET_API_TOKEN")
 	os.Unsetenv("BITBUCKET_TIMEOUT")
+	os.Unsetenv("OPENAI_API_KEY")
+	os.Unsetenv("OPENAI_DEFAULT_MODEL")
+	os.Unsetenv("OPENAI_COMPLEX_MODEL")
+	os.Unsetenv("OPENAI_MAX_TOKENS")
+	os.Unsetenv("OPENAI_TEMPERATURE")
+	os.Unsetenv("OPENAI_TOKEN_THRESHOLD")
+	os.Unsetenv("CACHE_TTL")
 
 	cfg := Load()
 
@@ -30,6 +37,13 @@ func TestLoad_Defaults(t *testing.T) {
 	assert.Equal(t, "", cfg.BitbucketEmail)
 	assert.Equal(t, "", cfg.BitbucketAPIToken)
 	assert.Equal(t, 30*time.Second, cfg.BitbucketTimeout)
+	assert.Equal(t, "", cfg.OpenAIAPIKey)
+	assert.Equal(t, "gpt-4o-mini", cfg.OpenAIDefaultModel)
+	assert.Equal(t, "gpt-4o", cfg.OpenAIComplexModel)
+	assert.Equal(t, 1024, cfg.OpenAIMaxTokens)
+	assert.InDelta(t, 0.3, cfg.OpenAITemperature, 0.001)
+	assert.Equal(t, 4000, cfg.OpenAITokenThreshold)
+	assert.Equal(t, 24*time.Hour, cfg.CacheTTL)
 }
 
 func TestLoad_Overrides(t *testing.T) {
@@ -42,6 +56,13 @@ func TestLoad_Overrides(t *testing.T) {
 	t.Setenv("BITBUCKET_EMAIL", "dev@company.com")
 	t.Setenv("BITBUCKET_API_TOKEN", "my-token")
 	t.Setenv("BITBUCKET_TIMEOUT", "15s")
+	t.Setenv("OPENAI_API_KEY", "sk-test-key")
+	t.Setenv("OPENAI_DEFAULT_MODEL", "gpt-4o-mini-custom")
+	t.Setenv("OPENAI_COMPLEX_MODEL", "gpt-4o-custom")
+	t.Setenv("OPENAI_MAX_TOKENS", "2048")
+	t.Setenv("OPENAI_TEMPERATURE", "0.5")
+	t.Setenv("OPENAI_TOKEN_THRESHOLD", "8000")
+	t.Setenv("CACHE_TTL", "12h")
 
 	cfg := Load()
 
@@ -54,6 +75,13 @@ func TestLoad_Overrides(t *testing.T) {
 	assert.Equal(t, "dev@company.com", cfg.BitbucketEmail)
 	assert.Equal(t, "my-token", cfg.BitbucketAPIToken)
 	assert.Equal(t, 15*time.Second, cfg.BitbucketTimeout)
+	assert.Equal(t, "sk-test-key", cfg.OpenAIAPIKey)
+	assert.Equal(t, "gpt-4o-mini-custom", cfg.OpenAIDefaultModel)
+	assert.Equal(t, "gpt-4o-custom", cfg.OpenAIComplexModel)
+	assert.Equal(t, 2048, cfg.OpenAIMaxTokens)
+	assert.InDelta(t, 0.5, cfg.OpenAITemperature, 0.001)
+	assert.Equal(t, 8000, cfg.OpenAITokenThreshold)
+	assert.Equal(t, 12*time.Hour, cfg.CacheTTL)
 }
 
 func TestParseDuration_Invalid(t *testing.T) {
