@@ -20,6 +20,8 @@ type AnalysisRepository interface {
 	GetByID(ctx context.Context, id string) (*domain.Analysis, error)
 	GetByDiffHash(ctx context.Context, hash string) (*domain.Analysis, error)
 	List(ctx context.Context, filter AnalysisFilter, offset, limit int) ([]domain.Analysis, int, error)
+	CreateRefinement(ctx context.Context, refinement *domain.Refinement) error
+	ListRefinements(ctx context.Context, analysisID string) ([]domain.Refinement, error)
 }
 
 type postgresAnalysisRepository struct {
@@ -176,6 +178,53 @@ func (r *postgresAnalysisRepository) List(ctx context.Context, filter AnalysisFi
 	}
 
 	return analyses, total, nil
+}
+
+func (r *postgresAnalysisRepository) CreateRefinement(ctx context.Context, refinement *domain.Refinement) error {
+	query := `
+		INSERT INTO refinements (
+			analysis_id, instruction, original_desc,
+			refined_desc, model_used, tokens_used
+		) VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, created_at`
+
+	return r.pool.QueryRow(ctx, query,
+		refinement.AnalysisID,
+		refinement.Instruction,
+		refinement.OriginalDesc,
+		nullableString(refinement.RefinedDesc),
+		nullableString(refinement.ModelUsed),
+		refinement.TokensUsed,
+	).Scan(&refinement.ID, &refinement.CreatedAt)
+}
+
+func (r *postgresAnalysisRepository) ListRefinements(ctx context.Context, analysisID string) ([]domain.Refinement, error) {
+	query := `
+		SELECT id, analysis_id, instruction, original_desc,
+			refined_desc, model_used, tokens_used, created_at
+		FROM refinements
+		WHERE analysis_id = $1
+		ORDER BY created_at ASC`
+
+	rows, err := r.pool.Query(ctx, query, analysisID)
+	if err != nil {
+		return nil, fmt.Errorf("listing refinements: %w", err)
+	}
+	defer rows.Close()
+
+	var refinements []domain.Refinement
+	for rows.Next() {
+		var ref domain.Refinement
+		if err := rows.Scan(
+			&ref.ID, &ref.AnalysisID, &ref.Instruction, &ref.OriginalDesc,
+			&ref.RefinedDesc, &ref.ModelUsed, &ref.TokensUsed, &ref.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scanning refinement: %w", err)
+		}
+		refinements = append(refinements, ref)
+	}
+
+	return refinements, nil
 }
 
 func nullableString(s string) *string {

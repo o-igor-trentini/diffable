@@ -78,3 +78,14 @@ func (r *AnalyzePRRequest) Validate() error {
 
 	return nil
 }
+
+type RefineRequest struct {
+	Instruction string `json:"instruction"`
+}
+
+func (r *RefineRequest) Validate() error {
+	if r.Instruction == "" {
+		return fmt.Errorf("%w: instruction is required", domain.ErrValidation)
+	}
+	return nil
+}

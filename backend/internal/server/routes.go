@@ -10,8 +10,9 @@ func (s *Server) RegisterRoutes() {
 		r.Post("/analyses/commit", s.AnalysisHandler.AnalyzeCommit)
 		r.Post("/analyses/range", s.AnalysisHandler.AnalyzeRange)
 		r.Post("/analyses/pr", s.AnalysisHandler.AnalyzePR)
+		r.Get("/analyses", s.HistoryHandler.ListAnalyses)
 		r.Get("/analyses/{id}", s.AnalysisHandler.GetAnalysis)
-
-		// Phase 5: history and refinement endpoints
+		r.Post("/analyses/{id}/refine", s.AnalysisHandler.RefineDescription)
+		r.Get("/analyses/{id}/refinements", s.HistoryHandler.GetRefinements)
 	})
 }

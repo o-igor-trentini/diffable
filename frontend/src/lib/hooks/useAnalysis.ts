@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { analyzeCommit, analyzeRange, analyzePR } from '../api/endpoints'
+import { analyzeCommit, analyzeRange, analyzePR, refineDescription } from '../api/endpoints'
 import type {
   AnalyzeCommitRequest,
   AnalyzeRangeRequest,
@@ -21,5 +21,12 @@ export function useAnalyzeRange() {
 export function useAnalyzePR() {
   return useMutation({
     mutationFn: (req: AnalyzePRRequest) => analyzePR(req),
+  })
+}
+
+export function useRefineDescription() {
+  return useMutation({
+    mutationFn: ({ id, instruction }: { id: string; instruction: string }) =>
+      refineDescription(id, instruction),
   })
 }

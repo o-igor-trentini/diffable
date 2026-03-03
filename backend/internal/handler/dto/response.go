@@ -17,6 +17,23 @@ type ErrorResponse struct {
 	Details string `json:"details,omitempty"`
 }
 
+type RefinementResponse struct {
+	ID          string `json:"id"`
+	AnalysisID  string `json:"analysis_id"`
+	Instruction string `json:"instruction"`
+	RefinedDesc string `json:"refined_description"`
+	Model       string `json:"model_used"`
+	TokensUsed  int    `json:"tokens_used"`
+	CreatedAt   string `json:"created_at"`
+}
+
+type PaginatedAnalysesResponse struct {
+	Data     []AnalysisResponse `json:"data"`
+	Total    int                `json:"total"`
+	Page     int                `json:"page"`
+	PageSize int                `json:"page_size"`
+}
+
 func AnalysisToResponse(a *domain.Analysis) *AnalysisResponse {
 	tokensUsed := 0
 	if a.TokensUsed != nil {
@@ -29,5 +46,21 @@ func AnalysisToResponse(a *domain.Analysis) *AnalysisResponse {
 		Model:       a.ModelUsed,
 		TokensUsed:  tokensUsed,
 		CreatedAt:   a.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+}
+
+func RefinementToResponse(r *domain.Refinement) *RefinementResponse {
+	tokensUsed := 0
+	if r.TokensUsed != nil {
+		tokensUsed = *r.TokensUsed
+	}
+	return &RefinementResponse{
+		ID:          r.ID,
+		AnalysisID:  r.AnalysisID,
+		Instruction: r.Instruction,
+		RefinedDesc: r.RefinedDesc,
+		Model:       r.ModelUsed,
+		TokensUsed:  tokensUsed,
+		CreatedAt:   r.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }

@@ -109,6 +109,16 @@ func (m *mockRepository) List(_ context.Context, _ repository.AnalysisFilter, _,
 	return m.analyses, m.total, m.listErr
 }
 
+func (m *mockRepository) CreateRefinement(_ context.Context, r *domain.Refinement) error {
+	r.ID = "refinement-id"
+	r.CreatedAt = time.Now()
+	return nil
+}
+
+func (m *mockRepository) ListRefinements(_ context.Context, _ string) ([]domain.Refinement, error) {
+	return nil, nil
+}
+
 type mockCache struct {
 	data map[string]string
 }

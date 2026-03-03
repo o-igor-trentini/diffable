@@ -53,7 +53,7 @@ func newTestAnalysis() *domain.Analysis {
 
 func TestAnalyzeCommit_ValidJSON_Returns200(t *testing.T) {
 	svc := &mockAnalysisService{analysis: newTestAnalysis()}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzeCommitRequest{RawDiff: "diff --git a/main.go"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))
@@ -71,7 +71,7 @@ func TestAnalyzeCommit_ValidJSON_Returns200(t *testing.T) {
 
 func TestAnalyzeCommit_MissingFields_Returns400(t *testing.T) {
 	svc := &mockAnalysisService{}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzeCommitRequest{})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))
@@ -84,7 +84,7 @@ func TestAnalyzeCommit_MissingFields_Returns400(t *testing.T) {
 
 func TestAnalyzeCommit_InvalidJSON_Returns400(t *testing.T) {
 	svc := &mockAnalysisService{}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader([]byte("invalid")))
 	w := httptest.NewRecorder()
@@ -96,7 +96,7 @@ func TestAnalyzeCommit_InvalidJSON_Returns400(t *testing.T) {
 
 func TestAnalyzeCommit_ServiceError_Returns500(t *testing.T) {
 	svc := &mockAnalysisService{err: assert.AnError}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzeCommitRequest{RawDiff: "diff --git a/main.go"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))
@@ -109,7 +109,7 @@ func TestAnalyzeCommit_ServiceError_Returns500(t *testing.T) {
 
 func TestAnalyzeRange_ValidJSON_Returns200(t *testing.T) {
 	svc := &mockAnalysisService{analysis: newTestAnalysis()}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzeRangeRequest{
 		Workspace: "ws",
@@ -127,7 +127,7 @@ func TestAnalyzeRange_ValidJSON_Returns200(t *testing.T) {
 
 func TestAnalyzeRange_MissingHashes_Returns400(t *testing.T) {
 	svc := &mockAnalysisService{}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzeRangeRequest{Workspace: "ws"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/range", bytes.NewReader(body))
@@ -140,7 +140,7 @@ func TestAnalyzeRange_MissingHashes_Returns400(t *testing.T) {
 
 func TestAnalyzePR_ValidJSON_Returns200(t *testing.T) {
 	svc := &mockAnalysisService{analysis: newTestAnalysis()}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzePRRequest{
 		Workspace: "ws",
@@ -157,7 +157,7 @@ func TestAnalyzePR_ValidJSON_Returns200(t *testing.T) {
 
 func TestAnalyzePR_MissingFields_Returns400(t *testing.T) {
 	svc := &mockAnalysisService{}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzePRRequest{})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/pr", bytes.NewReader(body))
@@ -170,7 +170,7 @@ func TestAnalyzePR_MissingFields_Returns400(t *testing.T) {
 
 func TestAnalyzePR_NotFound_Returns404(t *testing.T) {
 	svc := &mockAnalysisService{err: domain.ErrNotFound}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzePRRequest{
 		Workspace: "ws",
@@ -187,7 +187,7 @@ func TestAnalyzePR_NotFound_Returns404(t *testing.T) {
 
 func TestGetAnalysis_ExistingID_Returns200(t *testing.T) {
 	svc := &mockAnalysisService{analysis: newTestAnalysis()}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/analyses/test-id-123", nil)
 	w := httptest.NewRecorder()
@@ -207,7 +207,7 @@ func TestGetAnalysis_ExistingID_Returns200(t *testing.T) {
 
 func TestGetAnalysis_NonExistingID_Returns404(t *testing.T) {
 	svc := &mockAnalysisService{err: domain.ErrNotFound}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/analyses/non-existent", nil)
 	w := httptest.NewRecorder()
@@ -223,7 +223,7 @@ func TestGetAnalysis_NonExistingID_Returns404(t *testing.T) {
 
 func TestAnalyzeCommit_ExternalServiceError_Returns502(t *testing.T) {
 	svc := &mockAnalysisService{err: domain.ErrExternalService}
-	h := NewAnalysisHandler(svc)
+	h := NewAnalysisHandler(svc, nil)
 
 	body, _ := json.Marshal(dto.AnalyzeCommitRequest{RawDiff: "diff --git a/main.go"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/analyses/commit", bytes.NewReader(body))

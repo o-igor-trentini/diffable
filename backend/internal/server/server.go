@@ -15,13 +15,15 @@ type Server struct {
 	Router          *chi.Mux
 	HealthHandler   *handler.HealthHandler
 	AnalysisHandler *handler.AnalysisHandler
+	HistoryHandler  *handler.HistoryHandler
 }
 
-func New(db handler.DBPinger, frontendURL string, analysisSvc service.AnalysisService) *Server {
+func New(db handler.DBPinger, frontendURL string, analysisSvc service.AnalysisService, refineSvc service.RefinementService, historySvc service.HistoryService) *Server {
 	s := &Server{
 		Router:          chi.NewRouter(),
 		HealthHandler:   handler.NewHealthHandler(db),
-		AnalysisHandler: handler.NewAnalysisHandler(analysisSvc),
+		AnalysisHandler: handler.NewAnalysisHandler(analysisSvc, refineSvc),
+		HistoryHandler:  handler.NewHistoryHandler(historySvc),
 	}
 
 	s.Router.Use(chimw.RequestID)

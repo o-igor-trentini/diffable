@@ -35,3 +35,30 @@ export interface ErrorResponse {
   message: string
   details?: string
 }
+
+export interface RefineRequest {
+  instruction: string
+}
+
+export interface RefinementResponse {
+  id: string
+  analysis_id: string
+  instruction: string
+  refined_description: string
+  model_used: string
+  tokens_used: number
+  created_at: string
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface HistoryFilter {
+  type?: string
+  page?: number
+  page_size?: number
+}

@@ -73,11 +73,13 @@ func main() {
 	// Repository
 	analysisRepo := repository.NewPostgresAnalysisRepository(pool)
 
-	// Service
+	// Services
 	analysisSvc := service.NewAnalysisService(bbClient, generator, analysisRepo, diffCache)
+	refinementSvc := service.NewRefinementService(generator, analysisRepo)
+	historySvc := service.NewHistoryService(analysisRepo)
 
 	// Server
-	srv := server.New(pool, cfg.FrontendURL, analysisSvc)
+	srv := server.New(pool, cfg.FrontendURL, analysisSvc, refinementSvc, historySvc)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),
