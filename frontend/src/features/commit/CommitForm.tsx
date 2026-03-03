@@ -6,8 +6,9 @@ import { TextArea } from '../shared/TextArea'
 import { AutocompleteInput } from '../shared/AutocompleteInput'
 import { ModeToggle, type SourceMode } from '../shared/ModeToggle'
 import { LevelSelector } from '../shared/LevelSelector'
+import { AdvancedSettings } from '../shared/AdvancedSettings'
 import { useRepositories } from '@/lib/hooks/useRepositories'
-import type { AnalyzeCommitRequest } from '@/lib/api/types'
+import type { AnalyzeCommitRequest, GenerationOverrides } from '@/lib/api/types'
 
 interface CommitFormProps {
   onSubmit: (req: AnalyzeCommitRequest) => void
@@ -21,20 +22,36 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
   const [commitHash, setCommitHash] = useState('')
   const [rawDiff, setRawDiff] = useState('')
   const [level, setLevel] = useState('functional')
+  const [overrides, setOverrides] = useState<GenerationOverrides>({})
   const [repoQuery, setRepoQuery] = useState('')
   const { data: repos, isLoading: reposLoading } = useRepositories(workspace, repoQuery)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
+    const effectiveOverrides: GenerationOverrides = {}
+    if (overrides.temperature !== undefined && overrides.temperature !== 0.3)
+      effectiveOverrides.temperature = overrides.temperature
+    if (overrides.max_tokens !== undefined && overrides.max_tokens !== 1024)
+      effectiveOverrides.max_tokens = overrides.max_tokens
+    if (overrides.model !== undefined && overrides.model !== 'auto')
+      effectiveOverrides.model = overrides.model
+
+    const hasOverrides = Object.keys(effectiveOverrides).length > 0
+
     if (mode === 'manual') {
-      onSubmit({ raw_diff: rawDiff.trim(), level })
+      onSubmit({
+        raw_diff: rawDiff.trim(),
+        level,
+        ...(hasOverrides && { overrides: effectiveOverrides }),
+      })
     } else {
       onSubmit({
         workspace: workspace.trim(),
         repo_slug: repoSlug.trim(),
         commit_hash: commitHash.trim(),
         level,
+        ...(hasOverrides && { overrides: effectiveOverrides }),
       })
     }
   }
@@ -105,6 +122,8 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
       <div className="border-t border-stone-100 pt-6 dark:border-white/[0.04]">
         <LevelSelector value={level} onChange={setLevel} disabled={isPending} />
       </div>
+
+      <AdvancedSettings value={overrides} onChange={setOverrides} disabled={isPending} />
 
       <Button type="submit" disabled={!isValid} loading={isPending}>
         <Zap size={16} />

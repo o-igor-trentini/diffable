@@ -129,20 +129,20 @@ Atualmente os parametros de geracao da OpenAI (max_tokens, temperature, modelo) 
 
 ### CommitForm (`frontend/src/features/commit/CommitForm.tsx`)
 
-- [ ] Importar `AdvancedSettings` e `GenerationOverrides`
-- [ ] Adicionar estado: `const [overrides, setOverrides] = useState<GenerationOverrides>({})`
-- [ ] Colocar `<AdvancedSettings value={overrides} onChange={setOverrides} disabled={isPending} />` entre `<LevelSelector>` e `<Button>`
-- [ ] No `handleSubmit`: montar `effectiveOverrides` somente com valores que diferem dos defaults (temperature != 0.3, max_tokens != 1024, model != "auto"); incluir `overrides` no payload apenas se houver algum override ativo
+- [x] Importar `AdvancedSettings` e `GenerationOverrides`
+- [x] Adicionar estado: `const [overrides, setOverrides] = useState<GenerationOverrides>({})`
+- [x] Colocar `<AdvancedSettings value={overrides} onChange={setOverrides} disabled={isPending} />` entre `<LevelSelector>` e `<Button>`
+- [x] No `handleSubmit`: montar `effectiveOverrides` somente com valores que diferem dos defaults (temperature != 0.3, max_tokens != 1024, model != "auto"); incluir `overrides` no payload apenas se houver algum override ativo
 
 ### PrForm (`frontend/src/features/pull-request/PrForm.tsx`)
 
-- [ ] Mesma integracao do CommitForm
-- [ ] Importar, estado, JSX, handleSubmit
+- [x] Mesma integracao do CommitForm
+- [x] Importar, estado, JSX, handleSubmit
 
 ### RangeForm (`frontend/src/features/range/RangeForm.tsx`)
 
-- [ ] Mesma integracao do CommitForm
-- [ ] Importar, estado, JSX, handleSubmit
+- [x] Mesma integracao do CommitForm
+- [x] Importar, estado, JSX, handleSubmit
 
 ---
 

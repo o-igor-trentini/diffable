@@ -4,8 +4,9 @@ import { Button } from '../shared/Button'
 import { TextInput } from '../shared/TextInput'
 import { AutocompleteInput } from '../shared/AutocompleteInput'
 import { LevelSelector } from '../shared/LevelSelector'
+import { AdvancedSettings } from '../shared/AdvancedSettings'
 import { useRepositories } from '@/lib/hooks/useRepositories'
-import type { AnalyzeRangeRequest } from '@/lib/api/types'
+import type { AnalyzeRangeRequest, GenerationOverrides } from '@/lib/api/types'
 
 interface RangeFormProps {
   onSubmit: (req: AnalyzeRangeRequest) => void
@@ -18,17 +19,30 @@ export function RangeForm({ onSubmit, isPending }: RangeFormProps) {
   const [fromHash, setFromHash] = useState('')
   const [toHash, setToHash] = useState('')
   const [level, setLevel] = useState('functional')
+  const [overrides, setOverrides] = useState<GenerationOverrides>({})
   const [repoQuery, setRepoQuery] = useState('')
   const { data: repos, isLoading: reposLoading } = useRepositories(workspace, repoQuery)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
+
+    const effectiveOverrides: GenerationOverrides = {}
+    if (overrides.temperature !== undefined && overrides.temperature !== 0.3)
+      effectiveOverrides.temperature = overrides.temperature
+    if (overrides.max_tokens !== undefined && overrides.max_tokens !== 1024)
+      effectiveOverrides.max_tokens = overrides.max_tokens
+    if (overrides.model !== undefined && overrides.model !== 'auto')
+      effectiveOverrides.model = overrides.model
+
+    const hasOverrides = Object.keys(effectiveOverrides).length > 0
+
     onSubmit({
       workspace: workspace.trim(),
       repo_slug: repoSlug.trim(),
       from_hash: fromHash.trim(),
       to_hash: toHash.trim(),
       level,
+      ...(hasOverrides && { overrides: effectiveOverrides }),
     })
   }
 
@@ -91,6 +105,8 @@ export function RangeForm({ onSubmit, isPending }: RangeFormProps) {
       <div className="border-t border-stone-100 pt-6 dark:border-white/[0.04]">
         <LevelSelector value={level} onChange={setLevel} disabled={isPending} />
       </div>
+
+      <AdvancedSettings value={overrides} onChange={setOverrides} disabled={isPending} />
 
       <Button type="submit" disabled={!isValid} loading={isPending}>
         <Zap size={16} />
