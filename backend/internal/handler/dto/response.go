@@ -5,6 +5,7 @@ import "github.com/igor-trentini/diffable/backend/internal/domain"
 type AnalysisResponse struct {
 	ID          string `json:"id"`
 	Type        string `json:"type"`
+	Level       string `json:"level"`
 	Description string `json:"description"`
 	Model       string `json:"model_used"`
 	TokensUsed  int    `json:"tokens_used"`
@@ -39,9 +40,14 @@ func AnalysisToResponse(a *domain.Analysis) *AnalysisResponse {
 	if a.TokensUsed != nil {
 		tokensUsed = *a.TokensUsed
 	}
+	level := a.Level
+	if level == "" {
+		level = "functional"
+	}
 	return &AnalysisResponse{
 		ID:          a.ID,
 		Type:        string(a.AnalysisType),
+		Level:       level,
 		Description: a.GeneratedDesc,
 		Model:       a.ModelUsed,
 		TokensUsed:  tokensUsed,

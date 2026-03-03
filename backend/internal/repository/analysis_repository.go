@@ -38,8 +38,8 @@ func (r *postgresAnalysisRepository) Create(ctx context.Context, analysis *domai
 			analysis_type, status, workspace, repo_slug,
 			commit_hash, from_hash, to_hash, pr_id,
 			raw_diff, diff_hash, generated_desc,
-			model_used, tokens_used, error_message
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+			model_used, tokens_used, error_message, level
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		RETURNING id, created_at, updated_at`
 
 	return r.pool.QueryRow(ctx, query,
@@ -57,6 +57,7 @@ func (r *postgresAnalysisRepository) Create(ctx context.Context, analysis *domai
 		nullableString(analysis.ModelUsed),
 		analysis.TokensUsed,
 		nullableString(analysis.ErrorMessage),
+		nullableString(analysis.Level),
 	).Scan(&analysis.ID, &analysis.CreatedAt, &analysis.UpdatedAt)
 }
 
@@ -66,7 +67,7 @@ func (r *postgresAnalysisRepository) GetByID(ctx context.Context, id string) (*d
 			commit_hash, from_hash, to_hash, pr_id,
 			raw_diff, diff_hash, generated_desc,
 			model_used, tokens_used, error_message,
-			created_at, updated_at
+			level, created_at, updated_at
 		FROM analyses WHERE id = $1`
 
 	a := &domain.Analysis{}
@@ -76,7 +77,7 @@ func (r *postgresAnalysisRepository) GetByID(ctx context.Context, id string) (*d
 		&a.CommitHash, &a.FromHash, &a.ToHash, &a.PrID,
 		&a.RawDiff, &a.DiffHash, &a.GeneratedDesc,
 		&a.ModelUsed, &a.TokensUsed, &a.ErrorMessage,
-		&a.CreatedAt, &a.UpdatedAt,
+		&a.Level, &a.CreatedAt, &a.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -93,7 +94,7 @@ func (r *postgresAnalysisRepository) GetByDiffHash(ctx context.Context, hash str
 			commit_hash, from_hash, to_hash, pr_id,
 			raw_diff, diff_hash, generated_desc,
 			model_used, tokens_used, error_message,
-			created_at, updated_at
+			level, created_at, updated_at
 		FROM analyses
 		WHERE diff_hash = $1 AND status = 'completed'
 		ORDER BY created_at DESC
@@ -106,7 +107,7 @@ func (r *postgresAnalysisRepository) GetByDiffHash(ctx context.Context, hash str
 		&a.CommitHash, &a.FromHash, &a.ToHash, &a.PrID,
 		&a.RawDiff, &a.DiffHash, &a.GeneratedDesc,
 		&a.ModelUsed, &a.TokensUsed, &a.ErrorMessage,
-		&a.CreatedAt, &a.UpdatedAt,
+		&a.Level, &a.CreatedAt, &a.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -124,7 +125,7 @@ func (r *postgresAnalysisRepository) List(ctx context.Context, filter AnalysisFi
 			commit_hash, from_hash, to_hash, pr_id,
 			raw_diff, diff_hash, generated_desc,
 			model_used, tokens_used, error_message,
-			created_at, updated_at
+			level, created_at, updated_at
 		FROM analyses`
 
 	var args []any
@@ -170,7 +171,7 @@ func (r *postgresAnalysisRepository) List(ctx context.Context, filter AnalysisFi
 			&a.CommitHash, &a.FromHash, &a.ToHash, &a.PrID,
 			&a.RawDiff, &a.DiffHash, &a.GeneratedDesc,
 			&a.ModelUsed, &a.TokensUsed, &a.ErrorMessage,
-			&a.CreatedAt, &a.UpdatedAt,
+			&a.Level, &a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, 0, fmt.Errorf("scanning analysis: %w", err)
 		}

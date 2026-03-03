@@ -7,6 +7,7 @@ import type {
   RefinementResponse,
   PaginatedResponse,
   HistoryFilter,
+  RepositoryResponse,
 } from './types'
 
 export async function analyzeCommit(req: AnalyzeCommitRequest): Promise<AnalysisResponse> {
@@ -46,5 +47,12 @@ export async function listAnalyses(filter?: HistoryFilter): Promise<PaginatedRes
 
 export async function getRefinements(id: string): Promise<RefinementResponse[]> {
   const { data } = await apiClient.get<RefinementResponse[]>(`/analyses/${id}/refinements`)
+  return data
+}
+
+export async function listRepositories(workspace: string, query?: string): Promise<RepositoryResponse[]> {
+  const params = new URLSearchParams({ workspace })
+  if (query) params.set('q', query)
+  const { data } = await apiClient.get<RepositoryResponse[]>(`/bitbucket/repositories?${params.toString()}`)
   return data
 }

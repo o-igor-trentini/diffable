@@ -31,6 +31,7 @@ type Analysis struct {
 	PrID          *int           `json:"pr_id,omitempty"`
 	RawDiff       string         `json:"-"`
 	DiffHash      string         `json:"diff_hash,omitempty"`
+	Level         string         `json:"level,omitempty"`
 	GeneratedDesc string         `json:"generated_description,omitempty"`
 	ModelUsed     string         `json:"model_used,omitempty"`
 	TokensUsed    *int           `json:"tokens_used,omitempty"`

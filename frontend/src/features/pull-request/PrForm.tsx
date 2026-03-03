@@ -3,7 +3,16 @@ import { Zap } from 'lucide-react'
 import { Button } from '../shared/Button'
 import { TextInput } from '../shared/TextInput'
 import { TextArea } from '../shared/TextArea'
+import { Select } from '../shared/Select'
+import { AutocompleteInput } from '../shared/AutocompleteInput'
+import { useRepositories } from '@/lib/hooks/useRepositories'
 import type { AnalyzePRRequest } from '@/lib/api/types'
+
+const levelOptions = [
+  { value: 'functional', label: 'Funcional' },
+  { value: 'technical', label: 'Técnico' },
+  { value: 'executive', label: 'Executivo' },
+]
 
 interface PrFormProps {
   onSubmit: (req: AnalyzePRRequest) => void
@@ -17,6 +26,9 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
   const [rawDiff, setRawDiff] = useState('')
   const [prTitle, setPrTitle] = useState('')
   const [prDescription, setPrDescription] = useState('')
+  const [level, setLevel] = useState('functional')
+  const [repoQuery, setRepoQuery] = useState('')
+  const { data: repos, isLoading: reposLoading } = useRepositories(workspace, repoQuery)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -26,6 +38,7 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
         raw_diff: rawDiff.trim(),
         pr_title: prTitle.trim(),
         pr_description: prDescription.trim(),
+        level,
         ...(prId.trim() && workspace.trim() && repoSlug.trim()
           ? {
               workspace: workspace.trim(),
@@ -39,6 +52,7 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
         workspace: workspace.trim(),
         repo_slug: repoSlug.trim(),
         pr_id: parseInt(prId, 10),
+        level,
       })
     }
   }
@@ -58,12 +72,15 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
           onChange={(e) => setWorkspace(e.target.value)}
           disabled={isPending}
         />
-        <TextInput
+        <AutocompleteInput
           id="pr-repo"
           label="Repositório"
           placeholder="meu-repo"
           value={repoSlug}
-          onChange={(e) => setRepoSlug(e.target.value)}
+          onChange={setRepoSlug}
+          onQueryChange={setRepoQuery}
+          options={(repos || []).map((r) => ({ value: r.slug, label: r.name }))}
+          loading={reposLoading}
           disabled={isPending}
         />
         <TextInput
@@ -109,6 +126,15 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
         rows={3}
         value={prDescription}
         onChange={(e) => setPrDescription(e.target.value)}
+        disabled={isPending}
+      />
+
+      <Select
+        id="pr-level"
+        label="Nível da Descrição"
+        options={levelOptions}
+        value={level}
+        onChange={(e) => setLevel(e.target.value)}
         disabled={isPending}
       />
 

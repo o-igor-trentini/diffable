@@ -1,6 +1,13 @@
 import { RefreshCw } from 'lucide-react'
 import { CopyButton } from './CopyButton'
+import { ExportMarkdownButton } from './ExportMarkdownButton'
 import type { AnalysisResponse } from '@/lib/api/types'
+
+const levelLabels: Record<string, string> = {
+  technical: 'Técnico',
+  functional: 'Funcional',
+  executive: 'Executivo',
+}
 
 interface ResultDisplayProps {
   result: AnalysisResponse
@@ -24,6 +31,7 @@ export function ResultDisplay({ result, onRefine }: ResultDisplayProps) {
             </button>
           )}
           <CopyButton text={result.description} />
+          <ExportMarkdownButton result={result} />
         </div>
       </div>
 
@@ -32,6 +40,7 @@ export function ResultDisplay({ result, onRefine }: ResultDisplayProps) {
       </div>
 
       <div className="mt-4 flex items-center gap-4 border-t border-gray-200 pt-3 text-xs text-gray-500 dark:border-gray-600 dark:text-gray-400">
+        <span>Nível: {levelLabels[result.level] || result.level}</span>
         <span>Modelo: {result.model_used}</span>
         <span>Tokens: {result.tokens_used}</span>
       </div>

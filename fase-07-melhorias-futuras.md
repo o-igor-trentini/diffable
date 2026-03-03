@@ -105,7 +105,7 @@
 
 ## 7d. Webhook para PRs
 
-**Objetivo:** Receber webhooks do Bitbucket quando um PR é criado e auto-gerar descrição.
+**Objetivo:** Receber webhooks do Bitbucket quando um PR é criado e auto-gerar descrição (DEVE SER CONFIGURÁVEL SE ATIVO/INATIVO PELA PLATAFORMA).
 
 ### Checklist
 
@@ -147,33 +147,6 @@
 - [ ] Análise é gerada em background automaticamente
 - [ ] Resultado pode ser consultado via `GET /api/v1/analyses`
 - [ ] Documentação explica como configurar webhook no Bitbucket
-
----
-
-## 7e. Integração CI/CD
-
-**Objetivo:** Permitir geração de descrições via pipeline CI (GitHub Actions, Bitbucket Pipelines).
-
-### Checklist
-
-- [ ] Criar CLI tool: `diffable`:
-  - Flag `--workspace`, `--repo`, `--pr-id` ou `--commit-hash`
-  - Flag `--api-url` para apontar para a plataforma
-  - Flag `--output` para formato (text, json, markdown)
-  - Faz POST para API e imprime resultado
-- [ ] Criar exemplo de Bitbucket Pipeline step:
-  ```yaml
-  - step:
-      name: Generate PR Description
-      script:
-        - diffable --api-url $BB_GEN_DESC_URL --workspace $BITBUCKET_WORKSPACE --repo $BITBUCKET_REPO_SLUG --pr-id $BITBUCKET_PR_ID
-  ```
-- [ ] Documentar uso em CI/CD
-
-### Critérios de Aceite
-
-- [ ] CLI funciona standalone e gera descrição via API
-- [ ] Exemplo de pipeline documentado e funcional
 
 ---
 

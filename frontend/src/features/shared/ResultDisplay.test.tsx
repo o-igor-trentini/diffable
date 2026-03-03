@@ -6,6 +6,7 @@ describe('ResultDisplay', () => {
   const mockResult = {
     id: 'test-id',
     type: 'single_commit',
+    level: 'functional',
     description: 'Generated test description',
     model_used: 'gpt-4o-mini',
     tokens_used: 150,
@@ -18,16 +19,18 @@ describe('ResultDisplay', () => {
     expect(screen.getByText('Generated test description')).toBeInTheDocument()
   })
 
-  it('shows model and token info', () => {
+  it('shows level, model and token info', () => {
     render(<ResultDisplay result={mockResult} />)
 
+    expect(screen.getByText('Nível: Funcional')).toBeInTheDocument()
     expect(screen.getByText('Modelo: gpt-4o-mini')).toBeInTheDocument()
     expect(screen.getByText('Tokens: 150')).toBeInTheDocument()
   })
 
-  it('renders copy button', () => {
+  it('renders copy and export buttons', () => {
     render(<ResultDisplay result={mockResult} />)
 
     expect(screen.getByText('Copiar')).toBeInTheDocument()
+    expect(screen.getByText('Exportar')).toBeInTheDocument()
   })
 })

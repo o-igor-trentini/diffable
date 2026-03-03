@@ -3,6 +3,7 @@ export interface AnalyzeCommitRequest {
   repo_slug?: string
   commit_hash?: string
   raw_diff?: string
+  level?: string
 }
 
 export interface AnalyzeRangeRequest {
@@ -10,6 +11,7 @@ export interface AnalyzeRangeRequest {
   repo_slug: string
   from_hash: string
   to_hash: string
+  level?: string
 }
 
 export interface AnalyzePRRequest {
@@ -19,11 +21,13 @@ export interface AnalyzePRRequest {
   raw_diff?: string
   pr_title?: string
   pr_description?: string
+  level?: string
 }
 
 export interface AnalysisResponse {
   id: string
   type: string
+  level: string
   description: string
   model_used: string
   tokens_used: number
@@ -55,6 +59,12 @@ export interface PaginatedResponse<T> {
   total: number
   page: number
   page_size: number
+}
+
+export interface RepositoryResponse {
+  slug: string
+  name: string
+  full_name: string
 }
 
 export interface HistoryFilter {

@@ -43,9 +43,17 @@ func NewAnalysisService(
 	}
 }
 
+func defaultLevel(level string) string {
+	if level == "" {
+		return "functional"
+	}
+	return level
+}
+
 func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCommitRequest) (*domain.Analysis, error) {
 	diff := req.RawDiff
 	var commitMessages []string
+	level := defaultLevel(req.Level)
 
 	if diff == "" {
 		var err error
@@ -66,7 +74,7 @@ func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCom
 		return nil, fmt.Errorf("%w: empty diff", domain.ErrValidation)
 	}
 
-	diffHash := cache.DiffCacheKey(diff)
+	diffHash := cache.DiffCacheKey(diff + ":" + level)
 
 	if cached, ok := s.cache.Get(diffHash); ok {
 		slog.Debug("service: cache hit", "hash", diffHash[:12])
@@ -76,6 +84,7 @@ func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCom
 			Workspace:     req.Workspace,
 			RepoSlug:      req.RepoSlug,
 			CommitHash:    req.CommitHash,
+			Level:         level,
 			DiffHash:      diffHash,
 			GeneratedDesc: cached,
 			ModelUsed:     "cache",
@@ -96,6 +105,7 @@ func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCom
 		Diff:           diff,
 		AnalysisType:   string(domain.AnalysisTypeSingleCommit),
 		CommitMessages: commitMessages,
+		Level:          level,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", domain.ErrExternalService, err.Error())
@@ -108,6 +118,7 @@ func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCom
 		Workspace:     req.Workspace,
 		RepoSlug:      req.RepoSlug,
 		CommitHash:    req.CommitHash,
+		Level:         level,
 		RawDiff:       diff,
 		DiffHash:      diffHash,
 		GeneratedDesc: output.Description,
@@ -123,6 +134,8 @@ func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCom
 }
 
 func (s *analysisService) AnalyzeRange(ctx context.Context, req *dto.AnalyzeRangeRequest) (*domain.Analysis, error) {
+	level := defaultLevel(req.Level)
+
 	commits, err := s.bbClient.ListCommitsInRange(ctx, req.Workspace, req.RepoSlug, req.ToHash, req.FromHash)
 	if err != nil {
 		return nil, s.mapExternalError(err)
@@ -153,7 +166,7 @@ func (s *analysisService) AnalyzeRange(ctx context.Context, req *dto.AnalyzeRang
 		return nil, fmt.Errorf("%w: empty diff for range", domain.ErrValidation)
 	}
 
-	diffHash := cache.DiffCacheKey(diff)
+	diffHash := cache.DiffCacheKey(diff + ":" + level)
 
 	if cached, ok := s.cache.Get(diffHash); ok {
 		analysis := &domain.Analysis{
@@ -163,6 +176,7 @@ func (s *analysisService) AnalyzeRange(ctx context.Context, req *dto.AnalyzeRang
 			RepoSlug:      req.RepoSlug,
 			FromHash:      req.FromHash,
 			ToHash:        req.ToHash,
+			Level:         level,
 			DiffHash:      diffHash,
 			GeneratedDesc: cached,
 			ModelUsed:     "cache",
@@ -182,6 +196,7 @@ func (s *analysisService) AnalyzeRange(ctx context.Context, req *dto.AnalyzeRang
 		Diff:           diff,
 		AnalysisType:   string(domain.AnalysisTypeCommitRange),
 		CommitMessages: commitMessages,
+		Level:          level,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", domain.ErrExternalService, err.Error())
@@ -195,6 +210,7 @@ func (s *analysisService) AnalyzeRange(ctx context.Context, req *dto.AnalyzeRang
 		RepoSlug:      req.RepoSlug,
 		FromHash:      req.FromHash,
 		ToHash:        req.ToHash,
+		Level:         level,
 		RawDiff:       diff,
 		DiffHash:      diffHash,
 		GeneratedDesc: output.Description,
@@ -213,6 +229,7 @@ func (s *analysisService) AnalyzePR(ctx context.Context, req *dto.AnalyzePRReque
 	diff := req.RawDiff
 	prTitle := req.PRTitle
 	prDesc := req.PRDescription
+	level := defaultLevel(req.Level)
 
 	if diff == "" {
 		var err error
@@ -240,7 +257,7 @@ func (s *analysisService) AnalyzePR(ctx context.Context, req *dto.AnalyzePRReque
 		return nil, fmt.Errorf("%w: empty diff", domain.ErrValidation)
 	}
 
-	diffHash := cache.DiffCacheKey(diff)
+	diffHash := cache.DiffCacheKey(diff + ":" + level)
 
 	if cached, ok := s.cache.Get(diffHash); ok {
 		prID := req.PRID
@@ -250,6 +267,7 @@ func (s *analysisService) AnalyzePR(ctx context.Context, req *dto.AnalyzePRReque
 			Workspace:     req.Workspace,
 			RepoSlug:      req.RepoSlug,
 			PrID:          &prID,
+			Level:         level,
 			DiffHash:      diffHash,
 			GeneratedDesc: cached,
 			ModelUsed:     "cache",
@@ -270,6 +288,7 @@ func (s *analysisService) AnalyzePR(ctx context.Context, req *dto.AnalyzePRReque
 		AnalysisType:  string(domain.AnalysisTypePullRequest),
 		PRTitle:       prTitle,
 		PRDescription: prDesc,
+		Level:         level,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", domain.ErrExternalService, err.Error())
@@ -283,6 +302,7 @@ func (s *analysisService) AnalyzePR(ctx context.Context, req *dto.AnalyzePRReque
 		Workspace:     req.Workspace,
 		RepoSlug:      req.RepoSlug,
 		PrID:          &prID,
+		Level:         level,
 		RawDiff:       diff,
 		DiffHash:      diffHash,
 		GeneratedDesc: output.Description,

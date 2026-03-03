@@ -2,7 +2,16 @@ import { useState, type FormEvent } from 'react'
 import { Zap } from 'lucide-react'
 import { Button } from '../shared/Button'
 import { TextInput } from '../shared/TextInput'
+import { Select } from '../shared/Select'
+import { AutocompleteInput } from '../shared/AutocompleteInput'
+import { useRepositories } from '@/lib/hooks/useRepositories'
 import type { AnalyzeRangeRequest } from '@/lib/api/types'
+
+const levelOptions = [
+  { value: 'functional', label: 'Funcional' },
+  { value: 'technical', label: 'Técnico' },
+  { value: 'executive', label: 'Executivo' },
+]
 
 interface RangeFormProps {
   onSubmit: (req: AnalyzeRangeRequest) => void
@@ -14,6 +23,9 @@ export function RangeForm({ onSubmit, isPending }: RangeFormProps) {
   const [repoSlug, setRepoSlug] = useState('')
   const [fromHash, setFromHash] = useState('')
   const [toHash, setToHash] = useState('')
+  const [level, setLevel] = useState('functional')
+  const [repoQuery, setRepoQuery] = useState('')
+  const { data: repos, isLoading: reposLoading } = useRepositories(workspace, repoQuery)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -22,6 +34,7 @@ export function RangeForm({ onSubmit, isPending }: RangeFormProps) {
       repo_slug: repoSlug.trim(),
       from_hash: fromHash.trim(),
       to_hash: toHash.trim(),
+      level,
     })
   }
 
@@ -39,12 +52,15 @@ export function RangeForm({ onSubmit, isPending }: RangeFormProps) {
           onChange={(e) => setWorkspace(e.target.value)}
           disabled={isPending}
         />
-        <TextInput
+        <AutocompleteInput
           id="range-repo"
           label="Repositório"
           placeholder="meu-repo"
           value={repoSlug}
-          onChange={(e) => setRepoSlug(e.target.value)}
+          onChange={setRepoSlug}
+          onQueryChange={setRepoQuery}
+          options={(repos || []).map((r) => ({ value: r.slug, label: r.name }))}
+          loading={reposLoading}
           disabled={isPending}
         />
       </div>
@@ -67,6 +83,15 @@ export function RangeForm({ onSubmit, isPending }: RangeFormProps) {
           disabled={isPending}
         />
       </div>
+
+      <Select
+        id="range-level"
+        label="Nível da Descrição"
+        options={levelOptions}
+        value={level}
+        onChange={(e) => setLevel(e.target.value)}
+        disabled={isPending}
+      />
 
       <Button type="submit" disabled={!isValid} loading={isPending}>
         <Zap size={16} />

@@ -14,5 +14,9 @@ func (s *Server) RegisterRoutes() {
 		r.Get("/analyses/{id}", s.AnalysisHandler.GetAnalysis)
 		r.Post("/analyses/{id}/refine", s.AnalysisHandler.RefineDescription)
 		r.Get("/analyses/{id}/refinements", s.HistoryHandler.GetRefinements)
+
+		r.Get("/bitbucket/repositories", s.BitbucketHandler.ListRepositories)
+
+		r.Post("/webhooks/bitbucket", s.WebhookHandler.HandleBitbucket)
 	})
 }

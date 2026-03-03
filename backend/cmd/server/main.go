@@ -19,6 +19,7 @@ import (
 	"github.com/igor-trentini/diffable/backend/internal/bitbucket"
 	"github.com/igor-trentini/diffable/backend/internal/cache"
 	"github.com/igor-trentini/diffable/backend/internal/config"
+	"github.com/igor-trentini/diffable/backend/internal/handler"
 	genoai "github.com/igor-trentini/diffable/backend/internal/openai"
 	"github.com/igor-trentini/diffable/backend/internal/repository"
 	"github.com/igor-trentini/diffable/backend/internal/server"
@@ -95,8 +96,13 @@ func main() {
 	refinementSvc := service.NewRefinementService(generator, analysisRepo)
 	historySvc := service.NewHistoryService(analysisRepo)
 
+	// Handlers
+	bbHandler := handler.NewBitbucketHandler(bbClient, diffCache)
+	webhookRepo := repository.NewPostgresWebhookRepository(pool)
+	whHandler := handler.NewWebhookHandler(analysisSvc, webhookRepo)
+
 	// Server
-	srv := server.New(pool, cfg.FrontendURL, cfg.RateLimitRPM, analysisSvc, refinementSvc, historySvc)
+	srv := server.New(pool, cfg.FrontendURL, cfg.RateLimitRPM, analysisSvc, refinementSvc, historySvc, bbHandler, whHandler)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.Port),

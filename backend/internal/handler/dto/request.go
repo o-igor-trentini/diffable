@@ -6,11 +6,25 @@ import (
 	"github.com/igor-trentini/diffable/backend/internal/domain"
 )
 
+var validLevels = map[string]bool{
+	"technical":  true,
+	"functional": true,
+	"executive":  true,
+}
+
+func validateLevel(level string) error {
+	if level != "" && !validLevels[level] {
+		return fmt.Errorf("%w: level must be one of: technical, functional, executive", domain.ErrValidation)
+	}
+	return nil
+}
+
 type AnalyzeCommitRequest struct {
 	Workspace  string `json:"workspace"`
 	RepoSlug   string `json:"repo_slug"`
 	CommitHash string `json:"commit_hash"`
 	RawDiff    string `json:"raw_diff"`
+	Level      string `json:"level"`
 }
 
 func (r *AnalyzeCommitRequest) Validate() error {
@@ -25,6 +39,10 @@ func (r *AnalyzeCommitRequest) Validate() error {
 		return fmt.Errorf("%w: workspace and repo_slug are required when using commit_hash", domain.ErrValidation)
 	}
 
+	if err := validateLevel(r.Level); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -33,6 +51,7 @@ type AnalyzeRangeRequest struct {
 	RepoSlug  string `json:"repo_slug"`
 	FromHash  string `json:"from_hash"`
 	ToHash    string `json:"to_hash"`
+	Level     string `json:"level"`
 }
 
 func (r *AnalyzeRangeRequest) Validate() error {
@@ -48,6 +67,9 @@ func (r *AnalyzeRangeRequest) Validate() error {
 	if r.ToHash == "" {
 		return fmt.Errorf("%w: to_hash is required", domain.ErrValidation)
 	}
+	if err := validateLevel(r.Level); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -58,6 +80,7 @@ type AnalyzePRRequest struct {
 	RawDiff       string `json:"raw_diff"`
 	PRTitle       string `json:"pr_title"`
 	PRDescription string `json:"pr_description"`
+	Level         string `json:"level"`
 }
 
 func (r *AnalyzePRRequest) Validate() error {
@@ -74,6 +97,10 @@ func (r *AnalyzePRRequest) Validate() error {
 
 	if hasRawDiff && !hasPRID && r.PRTitle == "" {
 		return fmt.Errorf("%w: pr_title is required when using raw_diff without pr_id", domain.ErrValidation)
+	}
+
+	if err := validateLevel(r.Level); err != nil {
+		return err
 	}
 
 	return nil

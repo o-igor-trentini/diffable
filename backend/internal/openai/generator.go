@@ -20,6 +20,7 @@ type GenerationInput struct {
 	CommitMessages []string
 	PRTitle        string
 	PRDescription  string
+	Level          string
 }
 
 type GenerationOutput struct {
@@ -67,7 +68,11 @@ func NewGenerator(client ChatClient, c cache.Cache, cfg GeneratorConfig) Descrip
 }
 
 func (g *openaiGenerator) Generate(ctx context.Context, input GenerationInput) (*GenerationOutput, error) {
-	cacheKey := cache.DiffCacheKey(input.Diff)
+	level := input.Level
+	if level == "" {
+		level = "functional"
+	}
+	cacheKey := cache.DiffCacheKey(input.Diff + ":" + level)
 	if cached, ok := g.cache.Get(cacheKey); ok {
 		slog.Debug("openai: cache hit", "key", cacheKey[:12])
 		return &GenerationOutput{Description: cached, Model: "cache"}, nil
@@ -144,8 +149,12 @@ func (g *openaiGenerator) Refine(ctx context.Context, input RefinementInput) (*G
 }
 
 func (g *openaiGenerator) buildMessages(diff string, input GenerationInput) []oai.ChatCompletionMessage {
+	level := input.Level
+	if level == "" {
+		level = "functional"
+	}
 	messages := []oai.ChatCompletionMessage{
-		{Role: oai.ChatMessageRoleSystem, Content: buildSystemPrompt()},
+		{Role: oai.ChatMessageRoleSystem, Content: buildSystemPromptForLevel(level)},
 	}
 
 	for _, ex := range buildFewShotExamples() {

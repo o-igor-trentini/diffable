@@ -199,7 +199,7 @@ func TestAnalyzeCommit_CacheHit_SkipsGenerator(t *testing.T) {
 	c := newMockCache()
 
 	diff := "diff --git a/main.go\n+cached"
-	diffHash := cache.DiffCacheKey(diff)
+	diffHash := cache.DiffCacheKey(diff + ":functional")
 	c.Set(diffHash, "Cached description", time.Hour)
 
 	svc := NewAnalysisService(bb, gen, repo, c)

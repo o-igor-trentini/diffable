@@ -3,7 +3,16 @@ import { Zap } from 'lucide-react'
 import { Button } from '../shared/Button'
 import { TextInput } from '../shared/TextInput'
 import { TextArea } from '../shared/TextArea'
+import { Select } from '../shared/Select'
+import { AutocompleteInput } from '../shared/AutocompleteInput'
+import { useRepositories } from '@/lib/hooks/useRepositories'
 import type { AnalyzeCommitRequest } from '@/lib/api/types'
+
+const levelOptions = [
+  { value: 'functional', label: 'Funcional' },
+  { value: 'technical', label: 'Técnico' },
+  { value: 'executive', label: 'Executivo' },
+]
 
 interface CommitFormProps {
   onSubmit: (req: AnalyzeCommitRequest) => void
@@ -15,17 +24,21 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
   const [repoSlug, setRepoSlug] = useState('')
   const [commitHash, setCommitHash] = useState('')
   const [rawDiff, setRawDiff] = useState('')
+  const [level, setLevel] = useState('functional')
+  const [repoQuery, setRepoQuery] = useState('')
+  const { data: repos, isLoading: reposLoading } = useRepositories(workspace, repoQuery)
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
 
     if (rawDiff.trim()) {
-      onSubmit({ raw_diff: rawDiff.trim() })
+      onSubmit({ raw_diff: rawDiff.trim(), level })
     } else {
       onSubmit({
         workspace: workspace.trim(),
         repo_slug: repoSlug.trim(),
         commit_hash: commitHash.trim(),
+        level,
       })
     }
   }
@@ -45,12 +58,15 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
           onChange={(e) => setWorkspace(e.target.value)}
           disabled={isPending}
         />
-        <TextInput
+        <AutocompleteInput
           id="commit-repo"
           label="Repositório"
           placeholder="meu-repo"
           value={repoSlug}
-          onChange={(e) => setRepoSlug(e.target.value)}
+          onChange={setRepoSlug}
+          onQueryChange={setRepoQuery}
+          options={(repos || []).map((r) => ({ value: r.slug, label: r.name }))}
+          loading={reposLoading}
           disabled={isPending}
         />
         <TextInput
@@ -76,6 +92,15 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
         rows={6}
         value={rawDiff}
         onChange={(e) => setRawDiff(e.target.value)}
+        disabled={isPending}
+      />
+
+      <Select
+        id="commit-level"
+        label="Nível da Descrição"
+        options={levelOptions}
+        value={level}
+        onChange={(e) => setLevel(e.target.value)}
         disabled={isPending}
       />
 

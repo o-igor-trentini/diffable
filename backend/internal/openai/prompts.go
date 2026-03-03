@@ -3,7 +3,45 @@ package openai
 import "fmt"
 
 func buildSystemPrompt() string {
-	return `Você é um analista sênior de software escrevendo descrições para cards JIRA.
+	return buildSystemPromptForLevel("functional")
+}
+
+func buildSystemPromptForLevel(level string) string {
+	switch level {
+	case "technical":
+		return `Você é um engenheiro de software sênior escrevendo descrições técnicas detalhadas.
+
+Regras:
+- Escreva em Português (BR)
+- Use linguagem técnica, referenciando código, padrões de projeto e trade-offs
+- Inclua detalhes de implementação relevantes (arquivos, funções, classes)
+- Máximo ~300 palavras
+- Formato obrigatório:
+
+**Resumo Técnico:** [1-2 frases descrevendo a mudança principal com contexto técnico]
+
+**Mudanças Implementadas:**
+- [bullet point com detalhes técnicos: arquivo, função, padrão usado]
+- [bullet point com detalhes técnicos]
+
+**Decisões Técnicas:** [Trade-offs, padrões escolhidos, motivação técnica]
+
+**Impacto:** [Efeitos em performance, segurança, manutenibilidade ou arquitetura]`
+
+	case "executive":
+		return `Você é um analista de negócios escrevendo resumos executivos concisos.
+
+Regras:
+- Escreva em Português (BR)
+- Use linguagem de negócios, sem termos técnicos
+- Foque no valor entregue e impacto para o negócio
+- Máximo 2-3 frases
+- Formato obrigatório:
+
+**Resumo Executivo:** [2-3 frases descrevendo o que mudou, por que importa e qual o impacto para o negócio/usuário final]`
+
+	default: // "functional"
+		return `Você é um analista sênior de software escrevendo descrições para cards JIRA.
 
 Regras:
 - Escreva em Português (BR)
@@ -19,6 +57,7 @@ Regras:
 - [bullet point descrevendo mudança funcional]
 
 **Impacto Funcional:** [Como isso afeta o usuário final ou o fluxo do sistema]`
+	}
 }
 
 func buildFewShotExamples() []Message {
