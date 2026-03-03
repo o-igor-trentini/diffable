@@ -1,9 +1,16 @@
+export interface GenerationOverrides {
+  max_tokens?: number
+  temperature?: number
+  model?: string
+}
+
 export interface AnalyzeCommitRequest {
   workspace?: string
   repo_slug?: string
   commit_hash?: string
   raw_diff?: string
   level?: string
+  overrides?: GenerationOverrides
 }
 
 export interface AnalyzeRangeRequest {
@@ -12,6 +19,7 @@ export interface AnalyzeRangeRequest {
   from_hash: string
   to_hash: string
   level?: string
+  overrides?: GenerationOverrides
 }
 
 export interface AnalyzePRRequest {
@@ -22,6 +30,7 @@ export interface AnalyzePRRequest {
   pr_title?: string
   pr_description?: string
   level?: string
+  overrides?: GenerationOverrides
 }
 
 export interface AnalysisResponse {

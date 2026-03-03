@@ -83,11 +83,11 @@ Atualmente os parametros de geracao da OpenAI (max_tokens, temperature, modelo) 
 
 **Arquivo:** `frontend/src/lib/api/types.ts`
 
-- [ ] Criar interface `GenerationOverrides`:
+- [x] Criar interface `GenerationOverrides`:
   - `max_tokens?: number`
   - `temperature?: number`
   - `model?: string`
-- [ ] Adicionar campo `overrides?: GenerationOverrides` em:
+- [x] Adicionar campo `overrides?: GenerationOverrides` em:
   - `AnalyzeCommitRequest`
   - `AnalyzeRangeRequest`
   - `AnalyzePRRequest`
@@ -98,27 +98,27 @@ Atualmente os parametros de geracao da OpenAI (max_tokens, temperature, modelo) 
 
 **Novo arquivo:** `frontend/src/features/shared/AdvancedSettings.tsx`
 
-- [ ] Criar componente controlado com props `{ value: GenerationOverrides, onChange, disabled? }`
-- [ ] Toggle colapsavel (comeca fechado):
+- [x] Criar componente controlado com props `{ value: GenerationOverrides, onChange, disabled? }`
+- [x] Toggle colapsavel (comeca fechado):
   - Icone `Settings2` + texto "Configuracoes avancadas" + chevron de direcao
   - Ao clicar, expande/recolhe o painel de configs
-- [ ] Secao **Temperature**:
+- [x] Secao **Temperature**:
   - Slider HTML range (0.0 a 1.0, step 0.1)
   - Label mostrando valor atual (ex: "Temperature: 0.3")
   - Descricao: "Controla a criatividade. Valores baixos = mais preciso, altos = mais criativo."
   - Escala visual: "Preciso (0.0)" ←→ "Criativo (1.0)"
-- [ ] Secao **Max Tokens**:
+- [x] Secao **Max Tokens**:
   - Grupo de 5 botoes: 256, 512, 1024, 2048, 4096
   - Default 1024 marcado com estilo violet
   - Descricao: "Limite de tokens na resposta gerada. Mais tokens = descricao mais longa."
-- [ ] Secao **Modelo**:
+- [x] Secao **Modelo**:
   - 3 cards estilo `LevelSelector` (grid 3 colunas):
     - Auto: "Selecao automatica baseada no tamanho e tipo"
     - GPT-4o Mini: "Rapido e eficiente para diffs simples"
     - GPT-4o: "Mais capaz, ideal para diffs complexos"
   - Default "Auto" marcado
   - Descricao: "Escolha o modelo de IA. 'Auto' seleciona automaticamente com base no tipo de analise."
-- [ ] Estilo consistente com `LevelSelector.tsx`:
+- [x] Estilo consistente com `LevelSelector.tsx`:
   - Violet para selecionado, stone para inativo
   - Suporte dark mode com prefixos `dark:`
   - `rounded-xl`, borders, transitions
