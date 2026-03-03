@@ -60,20 +60,20 @@ Atualmente os parametros de geracao da OpenAI (max_tokens, temperature, modelo) 
 
 **Arquivo:** `backend/internal/service/analysis_service.go`
 
-- [ ] Criar funcao helper `applyOverrides(input *openai.GenerationInput, overrides *dto.GenerationOverrides)`:
+- [x] Criar funcao helper `applyOverrides(input *openai.GenerationInput, overrides *dto.GenerationOverrides)`:
   - Copia `overrides.MaxTokens` → `input.MaxTokensOverride`
   - Copia `overrides.Temperature` → `input.TemperatureOverride`
   - Copia `overrides.Model` → `input.ModelOverride`
   - Se overrides == nil, nao faz nada
-- [ ] Criar funcao helper `hasOverrides(overrides *dto.GenerationOverrides) bool`:
+- [x] Criar funcao helper `hasOverrides(overrides *dto.GenerationOverrides) bool`:
   - Retorna true se algum campo e non-nil (e Model != "auto")
-- [ ] Em `AnalyzeCommit()`:
+- [x] Em `AnalyzeCommit()`:
   - Envolver cache do service (`s.cache.Get` na linha 79) e DB lookup (`s.repository.GetByDiffHash` na linha 98) em `if !hasOverrides(req.Overrides)`
   - Chamar `applyOverrides(&genInput, req.Overrides)` antes de `s.generator.Generate()`
-- [ ] Em `AnalyzeRange()`:
+- [x] Em `AnalyzeRange()`:
   - Mesmo tratamento: guardar cache (linha 171) e DB (linha 190) com `!hasOverrides()`
   - Chamar `applyOverrides` antes de `Generate()`
-- [ ] Em `AnalyzePR()`:
+- [x] Em `AnalyzePR()`:
   - Mesmo tratamento: guardar cache (linha 262) e DB (linha 281) com `!hasOverrides()`
   - Chamar `applyOverrides` antes de `Generate()`
 

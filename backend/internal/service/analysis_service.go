@@ -50,6 +50,31 @@ func defaultLevel(level string) string {
 	return level
 }
 
+func applyOverrides(input *openai.GenerationInput, overrides *dto.GenerationOverrides) {
+	if overrides == nil {
+		return
+	}
+	input.MaxTokensOverride = overrides.MaxTokens
+	input.TemperatureOverride = overrides.Temperature
+	input.ModelOverride = overrides.Model
+}
+
+func hasOverrides(overrides *dto.GenerationOverrides) bool {
+	if overrides == nil {
+		return false
+	}
+	if overrides.MaxTokens != nil {
+		return true
+	}
+	if overrides.Temperature != nil {
+		return true
+	}
+	if overrides.Model != nil && *overrides.Model != "auto" {
+		return true
+	}
+	return false
+}
+
 func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCommitRequest) (*domain.Analysis, error) {
 	diff := req.RawDiff
 	var commitMessages []string
@@ -76,37 +101,42 @@ func (s *analysisService) AnalyzeCommit(ctx context.Context, req *dto.AnalyzeCom
 
 	diffHash := cache.DiffCacheKey(diff + ":" + level)
 
-	if cached, ok := s.cache.Get(diffHash); ok {
-		slog.Debug("service: cache hit", "hash", diffHash[:12])
-		analysis := &domain.Analysis{
-			AnalysisType:  domain.AnalysisTypeSingleCommit,
-			Status:        domain.AnalysisStatusCompleted,
-			Workspace:     req.Workspace,
-			RepoSlug:      req.RepoSlug,
-			CommitHash:    req.CommitHash,
-			Level:         level,
-			DiffHash:      diffHash,
-			GeneratedDesc: cached,
-			ModelUsed:     "cache",
+	if !hasOverrides(req.Overrides) {
+		if cached, ok := s.cache.Get(diffHash); ok {
+			slog.Debug("service: cache hit", "hash", diffHash[:12])
+			analysis := &domain.Analysis{
+				AnalysisType:  domain.AnalysisTypeSingleCommit,
+				Status:        domain.AnalysisStatusCompleted,
+				Workspace:     req.Workspace,
+				RepoSlug:      req.RepoSlug,
+				CommitHash:    req.CommitHash,
+				Level:         level,
+				DiffHash:      diffHash,
+				GeneratedDesc: cached,
+				ModelUsed:     "cache",
+			}
+			if err := s.repository.Create(ctx, analysis); err != nil {
+				slog.Warn("failed to save cached analysis", "error", err)
+			}
+			return analysis, nil
 		}
-		if err := s.repository.Create(ctx, analysis); err != nil {
-			slog.Warn("failed to save cached analysis", "error", err)
+
+		existing, err := s.repository.GetByDiffHash(ctx, diffHash)
+		if err == nil {
+			slog.Debug("service: db hit", "hash", diffHash[:12])
+			return existing, nil
 		}
-		return analysis, nil
 	}
 
-	existing, err := s.repository.GetByDiffHash(ctx, diffHash)
-	if err == nil {
-		slog.Debug("service: db hit", "hash", diffHash[:12])
-		return existing, nil
-	}
-
-	output, err := s.generator.Generate(ctx, openai.GenerationInput{
+	genInput := openai.GenerationInput{
 		Diff:           diff,
 		AnalysisType:   string(domain.AnalysisTypeSingleCommit),
 		CommitMessages: commitMessages,
 		Level:          level,
-	})
+	}
+	applyOverrides(&genInput, req.Overrides)
+
+	output, err := s.generator.Generate(ctx, genInput)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", domain.ErrExternalService, err.Error())
 	}
@@ -168,36 +198,41 @@ func (s *analysisService) AnalyzeRange(ctx context.Context, req *dto.AnalyzeRang
 
 	diffHash := cache.DiffCacheKey(diff + ":" + level)
 
-	if cached, ok := s.cache.Get(diffHash); ok {
-		analysis := &domain.Analysis{
-			AnalysisType:  domain.AnalysisTypeCommitRange,
-			Status:        domain.AnalysisStatusCompleted,
-			Workspace:     req.Workspace,
-			RepoSlug:      req.RepoSlug,
-			FromHash:      req.FromHash,
-			ToHash:        req.ToHash,
-			Level:         level,
-			DiffHash:      diffHash,
-			GeneratedDesc: cached,
-			ModelUsed:     "cache",
+	if !hasOverrides(req.Overrides) {
+		if cached, ok := s.cache.Get(diffHash); ok {
+			analysis := &domain.Analysis{
+				AnalysisType:  domain.AnalysisTypeCommitRange,
+				Status:        domain.AnalysisStatusCompleted,
+				Workspace:     req.Workspace,
+				RepoSlug:      req.RepoSlug,
+				FromHash:      req.FromHash,
+				ToHash:        req.ToHash,
+				Level:         level,
+				DiffHash:      diffHash,
+				GeneratedDesc: cached,
+				ModelUsed:     "cache",
+			}
+			if err := s.repository.Create(ctx, analysis); err != nil {
+				slog.Warn("failed to save cached analysis", "error", err)
+			}
+			return analysis, nil
 		}
-		if err := s.repository.Create(ctx, analysis); err != nil {
-			slog.Warn("failed to save cached analysis", "error", err)
+
+		existing, err := s.repository.GetByDiffHash(ctx, diffHash)
+		if err == nil {
+			return existing, nil
 		}
-		return analysis, nil
 	}
 
-	existing, err := s.repository.GetByDiffHash(ctx, diffHash)
-	if err == nil {
-		return existing, nil
-	}
-
-	output, err := s.generator.Generate(ctx, openai.GenerationInput{
+	genInput := openai.GenerationInput{
 		Diff:           diff,
 		AnalysisType:   string(domain.AnalysisTypeCommitRange),
 		CommitMessages: commitMessages,
 		Level:          level,
-	})
+	}
+	applyOverrides(&genInput, req.Overrides)
+
+	output, err := s.generator.Generate(ctx, genInput)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", domain.ErrExternalService, err.Error())
 	}
@@ -259,37 +294,42 @@ func (s *analysisService) AnalyzePR(ctx context.Context, req *dto.AnalyzePRReque
 
 	diffHash := cache.DiffCacheKey(diff + ":" + level)
 
-	if cached, ok := s.cache.Get(diffHash); ok {
-		prID := req.PRID
-		analysis := &domain.Analysis{
-			AnalysisType:  domain.AnalysisTypePullRequest,
-			Status:        domain.AnalysisStatusCompleted,
-			Workspace:     req.Workspace,
-			RepoSlug:      req.RepoSlug,
-			PrID:          &prID,
-			Level:         level,
-			DiffHash:      diffHash,
-			GeneratedDesc: cached,
-			ModelUsed:     "cache",
+	if !hasOverrides(req.Overrides) {
+		if cached, ok := s.cache.Get(diffHash); ok {
+			prID := req.PRID
+			analysis := &domain.Analysis{
+				AnalysisType:  domain.AnalysisTypePullRequest,
+				Status:        domain.AnalysisStatusCompleted,
+				Workspace:     req.Workspace,
+				RepoSlug:      req.RepoSlug,
+				PrID:          &prID,
+				Level:         level,
+				DiffHash:      diffHash,
+				GeneratedDesc: cached,
+				ModelUsed:     "cache",
+			}
+			if err := s.repository.Create(ctx, analysis); err != nil {
+				slog.Warn("failed to save cached analysis", "error", err)
+			}
+			return analysis, nil
 		}
-		if err := s.repository.Create(ctx, analysis); err != nil {
-			slog.Warn("failed to save cached analysis", "error", err)
+
+		existing, err := s.repository.GetByDiffHash(ctx, diffHash)
+		if err == nil {
+			return existing, nil
 		}
-		return analysis, nil
 	}
 
-	existing, err := s.repository.GetByDiffHash(ctx, diffHash)
-	if err == nil {
-		return existing, nil
-	}
-
-	output, err := s.generator.Generate(ctx, openai.GenerationInput{
+	genInput := openai.GenerationInput{
 		Diff:          diff,
 		AnalysisType:  string(domain.AnalysisTypePullRequest),
 		PRTitle:       prTitle,
 		PRDescription: prDesc,
 		Level:         level,
-	})
+	}
+	applyOverrides(&genInput, req.Overrides)
+
+	output, err := s.generator.Generate(ctx, genInput)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", domain.ErrExternalService, err.Error())
 	}
