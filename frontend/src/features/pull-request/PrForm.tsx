@@ -24,6 +24,7 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
   const [prTitle, setPrTitle] = useState('')
   const [prDescription, setPrDescription] = useState('')
   const [level, setLevel] = useState('functional')
+  const [userContext, setUserContext] = useState('')
   const [overrides, setOverrides] = useState<GenerationOverrides>({})
   const [repoQuery, setRepoQuery] = useState('')
   const { data: repos, isLoading: reposLoading } = useRepositories(workspace, repoQuery)
@@ -41,12 +42,15 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
 
     const hasOverrides = Object.keys(effectiveOverrides).length > 0
 
+    const trimmedContext = userContext.trim()
+
     if (mode === 'manual') {
       onSubmit({
         raw_diff: rawDiff.trim(),
         pr_title: prTitle.trim(),
         pr_description: prDescription.trim() || undefined,
         level,
+        ...(trimmedContext && { user_context: trimmedContext }),
         ...(hasOverrides && { overrides: effectiveOverrides }),
       })
     } else {
@@ -55,6 +59,7 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
         repo_slug: repoSlug.trim(),
         pr_id: parseInt(prId, 10),
         level,
+        ...(trimmedContext && { user_context: trimmedContext }),
         ...(hasOverrides && { overrides: effectiveOverrides }),
       })
     }
@@ -145,6 +150,17 @@ export function PrForm({ onSubmit, isPending }: PrFormProps) {
       <div className="border-t border-stone-100 pt-6 dark:border-white/[0.04]">
         <LevelSelector value={level} onChange={setLevel} disabled={isPending} />
       </div>
+
+      <TextArea
+        id="pr-user-context"
+        label="Contexto Adicional"
+        placeholder="Ex: Este PR integra a data de emissão da CNH retornada pela API Nexus. O campo é opcional e pode vir vazio..."
+        hint="Opcional. Forneça contexto sobre a tarefa para melhorar a descrição gerada. Especialmente útil no nível QA Detalhado."
+        rows={3}
+        value={userContext}
+        onChange={(e) => setUserContext(e.target.value)}
+        disabled={isPending}
+      />
 
       <AdvancedSettings value={overrides} onChange={setOverrides} disabled={isPending} />
 

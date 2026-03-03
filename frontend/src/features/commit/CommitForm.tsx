@@ -22,6 +22,7 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
   const [commitHash, setCommitHash] = useState('')
   const [rawDiff, setRawDiff] = useState('')
   const [level, setLevel] = useState('functional')
+  const [userContext, setUserContext] = useState('')
   const [overrides, setOverrides] = useState<GenerationOverrides>({})
   const [repoQuery, setRepoQuery] = useState('')
   const { data: repos, isLoading: reposLoading } = useRepositories(workspace, repoQuery)
@@ -39,10 +40,13 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
 
     const hasOverrides = Object.keys(effectiveOverrides).length > 0
 
+    const trimmedContext = userContext.trim()
+
     if (mode === 'manual') {
       onSubmit({
         raw_diff: rawDiff.trim(),
         level,
+        ...(trimmedContext && { user_context: trimmedContext }),
         ...(hasOverrides && { overrides: effectiveOverrides }),
       })
     } else {
@@ -51,6 +55,7 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
         repo_slug: repoSlug.trim(),
         commit_hash: commitHash.trim(),
         level,
+        ...(trimmedContext && { user_context: trimmedContext }),
         ...(hasOverrides && { overrides: effectiveOverrides }),
       })
     }
@@ -122,6 +127,17 @@ export function CommitForm({ onSubmit, isPending }: CommitFormProps) {
       <div className="border-t border-stone-100 pt-6 dark:border-white/[0.04]">
         <LevelSelector value={level} onChange={setLevel} disabled={isPending} />
       </div>
+
+      <TextArea
+        id="commit-user-context"
+        label="Contexto Adicional"
+        placeholder="Ex: Este PR integra a data de emissão da CNH retornada pela API Nexus. O campo é opcional e pode vir vazio..."
+        hint="Opcional. Forneça contexto sobre a tarefa para melhorar a descrição gerada. Especialmente útil no nível QA Detalhado."
+        rows={3}
+        value={userContext}
+        onChange={(e) => setUserContext(e.target.value)}
+        disabled={isPending}
+      />
 
       <AdvancedSettings value={overrides} onChange={setOverrides} disabled={isPending} />
 

@@ -1,4 +1,4 @@
-import { ClipboardList, Code2, BarChart3 } from 'lucide-react'
+import { ClipboardList, TestTube2, Code2, BarChart3 } from 'lucide-react'
 
 interface LevelOption {
   value: string
@@ -13,6 +13,12 @@ const levels: LevelOption[] = [
     label: 'Funcional',
     description: 'Para QA e Product Owners. Foco em mudanças funcionais, sem jargão técnico.',
     icon: <ClipboardList size={18} />,
+  },
+  {
+    value: 'qa_detailed',
+    label: 'QA Detalhado',
+    description: 'Para QA validar cards Jira. Descrição completa com fluxos, regras de negócio e cenários de teste.',
+    icon: <TestTube2 size={18} />,
   },
   {
     value: 'technical',
@@ -43,7 +49,7 @@ export function LevelSelector({ value, onChange, disabled }: LevelSelectorProps)
       <p className="text-xs text-stone-400 dark:text-stone-500">
         Escolha o publico-alvo da descricao gerada
       </p>
-      <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {levels.map((level) => {
           const isSelected = value === level.value
           return (

@@ -114,13 +114,13 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 **Arquivo:** `frontend/src/features/shared/LevelSelector.tsx`
 
-- [ ] Importar icone `TestTube2` de `lucide-react`
-- [ ] Adicionar 4a opcao no array `levels` (entre Funcional e Tecnico):
+- [x] Importar icone `TestTube2` de `lucide-react`
+- [x] Adicionar 4a opcao no array `levels` (entre Funcional e Tecnico):
   - value: `qa_detailed`
   - label: `QA Detalhado`
   - description: `Para QA validar cards Jira. Descricao completa com fluxos, regras de negocio e cenarios de teste.`
   - icon: `<TestTube2 size={18} />`
-- [ ] Ajustar grid de `sm:grid-cols-3` para `sm:grid-cols-2 lg:grid-cols-4`
+- [x] Ajustar grid de `sm:grid-cols-3` para `sm:grid-cols-2 lg:grid-cols-4`
 
 ---
 
@@ -128,21 +128,21 @@ Ao selecionar o nivel "QA Detalhado", a descricao gerada deve conter secoes como
 
 ### PrForm (`frontend/src/features/pull-request/PrForm.tsx`)
 
-- [ ] Adicionar estado `const [userContext, setUserContext] = useState('')`
-- [ ] Adicionar `<TextArea>` para "Contexto Adicional" entre `LevelSelector` e `AdvancedSettings`:
+- [x] Adicionar estado `const [userContext, setUserContext] = useState('')`
+- [x] Adicionar `<TextArea>` para "Contexto Adicional" entre `LevelSelector` e `AdvancedSettings`:
   - label: `Contexto Adicional`
   - placeholder: `Ex: Este PR integra a data de emissao da CNH retornada pela API Nexus. O campo e opcional e pode vir vazio...`
   - hint: `Opcional. Forneca contexto sobre a tarefa para melhorar a descricao gerada. Especialmente util no nivel QA Detalhado.`
   - rows: 3
-- [ ] No `handleSubmit`: incluir `user_context: userContext.trim()` no payload quando nao vazio
+- [x] No `handleSubmit`: incluir `user_context: userContext.trim()` no payload quando nao vazio
 
 ### CommitForm (`frontend/src/features/commit/CommitForm.tsx`)
 
-- [ ] Mesma integracao do PrForm (estado, TextArea, handleSubmit)
+- [x] Mesma integracao do PrForm (estado, TextArea, handleSubmit)
 
 ### RangeForm (`frontend/src/features/range/RangeForm.tsx`)
 
-- [ ] Mesma integracao do PrForm (estado, TextArea, handleSubmit)
+- [x] Mesma integracao do PrForm (estado, TextArea, handleSubmit)
 
 ---
 
