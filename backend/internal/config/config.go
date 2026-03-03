@@ -11,6 +11,11 @@ type Config struct {
 	FrontendURL     string
 	LogLevel        string
 	ShutdownTimeout time.Duration
+
+	BitbucketBaseURL  string
+	BitbucketEmail    string
+	BitbucketAPIToken string
+	BitbucketTimeout  time.Duration
 }
 
 func Load() *Config {
@@ -20,6 +25,11 @@ func Load() *Config {
 		FrontendURL:     getEnv("FRONTEND_URL", "http://localhost:3000"),
 		LogLevel:        getEnv("LOG_LEVEL", "info"),
 		ShutdownTimeout: parseDuration(getEnv("SHUTDOWN_TIMEOUT", "30s"), 30*time.Second),
+
+		BitbucketBaseURL:  getEnv("BITBUCKET_BASE_URL", "https://api.bitbucket.org/2.0"),
+		BitbucketEmail:    getEnv("BITBUCKET_EMAIL", ""),
+		BitbucketAPIToken: getEnv("BITBUCKET_API_TOKEN", ""),
+		BitbucketTimeout:  parseDuration(getEnv("BITBUCKET_TIMEOUT", "30s"), 30*time.Second),
 	}
 }
 
