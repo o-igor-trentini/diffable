@@ -150,24 +150,24 @@ Atualmente os parametros de geracao da OpenAI (max_tokens, temperature, modelo) 
 
 ### Backend
 
-- [ ] **DTO**: testar `GenerationOverrides.Validate()` — limites invalidos, modelo invalido, nil (passa), valores validos
-- [ ] **Generator**: testar que overrides sao usados no `ChatCompletionRequest` enviado ao OpenAI
-- [ ] **Generator**: testar que cache e bypassado quando overrides estao presentes
-- [ ] **Generator**: testar que `model = "auto"` ainda delega para `SelectModel()`
-- [ ] **Service**: testar que overrides fluem do DTO ate o `GenerationInput` passado ao generator
+- [x] **DTO**: testar `GenerationOverrides.Validate()` — limites invalidos, modelo invalido, nil (passa), valores validos
+- [x] **Generator**: testar que overrides sao usados no `ChatCompletionRequest` enviado ao OpenAI
+- [x] **Generator**: testar que cache e bypassado quando overrides estao presentes
+- [x] **Generator**: testar que `model = "auto"` ainda delega para `SelectModel()`
+- [x] **Service**: testar que overrides fluem do DTO ate o `GenerationInput` passado ao generator
 
 ### Frontend
 
-- [ ] **AdvancedSettings.test.tsx**: toggle abre/fecha, slider atualiza callback, botoes de max_tokens funcionam, cards de modelo funcionam, disabled propaga
-- [ ] **CommitForm.test.tsx**: overrides nao incluidos com defaults; overrides incluidos quando alterados
-- [ ] **PrForm.test.tsx**: mesmo que CommitForm
-- [ ] **RangeForm.test.tsx**: mesmo que CommitForm
+- [x] **AdvancedSettings.test.tsx**: toggle abre/fecha, slider atualiza callback, botoes de max_tokens funcionam, cards de modelo funcionam, disabled propaga
+- [x] **CommitForm.test.tsx**: overrides nao incluidos com defaults; overrides incluidos quando alterados
+- [x] **PrForm.test.tsx**: mesmo que CommitForm
+- [x] **RangeForm.test.tsx**: mesmo que CommitForm
 
 ---
 
 ## Verificacao final
 
-- [ ] `cd backend && go test ./...` — todos os testes passam
-- [ ] `cd frontend && npm test` — todos os testes passam
+- [x] `cd backend && go test ./...` — todos os testes passam
+- [x] `cd frontend && npm test` — todos os testes passam
 - [ ] Teste manual: abrir form, expandir configs avancadas, alterar parametros, submeter e verificar `model_used` na resposta
 - [ ] Teste de retrocompatibilidade: submeter sem abrir configs → payload sem `overrides`, comportamento identico ao atual

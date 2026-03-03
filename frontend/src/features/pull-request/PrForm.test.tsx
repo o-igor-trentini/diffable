@@ -68,4 +68,39 @@ describe('PrForm', () => {
 
     expect(screen.getByRole('button', { name: /gerar descricao/i })).toBeEnabled()
   })
+
+  it('does not include overrides when using defaults', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<PrForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.type(screen.getByLabelText('Workspace'), 'ws')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
+    await user.type(screen.getByLabelText('Numero do PR'), '42')
+
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.overrides).toBeUndefined()
+  })
+
+  it('includes overrides when non-default values are set', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<PrForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.type(screen.getByLabelText('Workspace'), 'ws')
+    await user.type(screen.getByLabelText('Repositorio'), 'repo')
+    await user.type(screen.getByLabelText('Numero do PR'), '42')
+
+    // Open advanced settings and select GPT-4o model
+    await user.click(screen.getByText('Configurações avançadas'))
+    await user.click(screen.getByText('GPT-4o'))
+
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.overrides).toBeDefined()
+    expect(payload.overrides.model).toBe('gpt-4o')
+  })
 })

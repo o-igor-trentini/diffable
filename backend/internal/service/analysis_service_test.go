@@ -62,13 +62,15 @@ func (m *mockBitbucketClient) ListRepositories(_ context.Context, _ string) ([]b
 }
 
 type mockGenerator struct {
-	output *openai.GenerationOutput
-	err    error
-	called bool
+	output       *openai.GenerationOutput
+	err          error
+	called       bool
+	capturedInput openai.GenerationInput
 }
 
-func (m *mockGenerator) Generate(_ context.Context, _ openai.GenerationInput) (*openai.GenerationOutput, error) {
+func (m *mockGenerator) Generate(_ context.Context, input openai.GenerationInput) (*openai.GenerationOutput, error) {
 	m.called = true
+	m.capturedInput = input
 	return m.output, m.err
 }
 
@@ -364,4 +366,190 @@ func TestGetAnalysis_NotFound(t *testing.T) {
 	_, err := svc.GetAnalysis(context.Background(), "nonexistent")
 
 	assert.ErrorIs(t, err, domain.ErrNotFound)
+}
+
+// --- Override tests ---
+
+func intPtr(v int) *int          { return &v }
+func float64Ptr(v float64) *float64 { return &v }
+func strPtr(v string) *string    { return &v }
+
+func TestAnalyzeCommit_OverridesFlowToGenerator(t *testing.T) {
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "Override result",
+			Model:       "gpt-4o",
+			TokensUsed:  100,
+		},
+	}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	svc := NewAnalysisService(&mockBitbucketClient{}, gen, repo, c)
+
+	_, err := svc.AnalyzeCommit(context.Background(), &dto.AnalyzeCommitRequest{
+		RawDiff: "diff --git a/main.go\n+overrides",
+		Overrides: &dto.GenerationOverrides{
+			MaxTokens:   intPtr(2048),
+			Temperature: float64Ptr(0.8),
+			Model:       strPtr("gpt-4o"),
+		},
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called)
+	assert.Equal(t, intPtr(2048), gen.capturedInput.MaxTokensOverride)
+	assert.Equal(t, float64Ptr(0.8), gen.capturedInput.TemperatureOverride)
+	assert.Equal(t, strPtr("gpt-4o"), gen.capturedInput.ModelOverride)
+}
+
+func TestAnalyzeCommit_OverridesSkipCache(t *testing.T) {
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "Fresh from generator",
+			Model:       "gpt-4o",
+			TokensUsed:  100,
+		},
+	}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	diff := "diff --git a/main.go\n+cache skip"
+	diffHash := cache.DiffCacheKey(diff + ":functional")
+	c.Set(diffHash, "Cached description", time.Hour)
+
+	svc := NewAnalysisService(&mockBitbucketClient{}, gen, repo, c)
+
+	result, err := svc.AnalyzeCommit(context.Background(), &dto.AnalyzeCommitRequest{
+		RawDiff: diff,
+		Overrides: &dto.GenerationOverrides{
+			MaxTokens: intPtr(2048),
+		},
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called, "generator should be called despite cache hit")
+	assert.Equal(t, "Fresh from generator", result.GeneratedDesc)
+}
+
+func TestAnalyzeCommit_OverridesSkipDBLookup(t *testing.T) {
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "Fresh from generator",
+			Model:       "gpt-4o",
+			TokensUsed:  100,
+		},
+	}
+	tokens := 50
+	repo := &mockRepository{
+		analysis: &domain.Analysis{
+			ID:            "existing-id",
+			GeneratedDesc: "DB cached description",
+			ModelUsed:     "gpt-4o-mini",
+			TokensUsed:    &tokens,
+		},
+		getByHashErr: nil, // DB would return a hit
+	}
+	c := newMockCache()
+
+	svc := NewAnalysisService(&mockBitbucketClient{}, gen, repo, c)
+
+	result, err := svc.AnalyzeCommit(context.Background(), &dto.AnalyzeCommitRequest{
+		RawDiff: "diff --git a/main.go\n+db skip",
+		Overrides: &dto.GenerationOverrides{
+			Temperature: float64Ptr(0.9),
+		},
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called, "generator should be called despite DB hit")
+	assert.Equal(t, "Fresh from generator", result.GeneratedDesc)
+}
+
+func TestAnalyzeCommit_ModelAutoDoesNotSkipCache(t *testing.T) {
+	gen := &mockGenerator{}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	diff := "diff --git a/main.go\n+auto model"
+	diffHash := cache.DiffCacheKey(diff + ":functional")
+	c.Set(diffHash, "Cached description", time.Hour)
+
+	svc := NewAnalysisService(&mockBitbucketClient{}, gen, repo, c)
+
+	result, err := svc.AnalyzeCommit(context.Background(), &dto.AnalyzeCommitRequest{
+		RawDiff: diff,
+		Overrides: &dto.GenerationOverrides{
+			Model: strPtr("auto"),
+		},
+	})
+
+	require.NoError(t, err)
+	assert.False(t, gen.called, "model=auto should not skip cache")
+	assert.Equal(t, "Cached description", result.GeneratedDesc)
+}
+
+func TestAnalyzeRange_OverridesFlowToGenerator(t *testing.T) {
+	bb := &mockBitbucketClient{
+		commits: []bitbucket.Commit{{Hash: "abc", Message: "msg"}},
+		diff:    "diff --git a/main.go\n+range override",
+	}
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "Range override result",
+			Model:       "gpt-4o",
+			TokensUsed:  200,
+		},
+	}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	svc := NewAnalysisService(bb, gen, repo, c)
+
+	_, err := svc.AnalyzeRange(context.Background(), &dto.AnalyzeRangeRequest{
+		Workspace: "ws",
+		RepoSlug:  "repo",
+		FromHash:  "abc",
+		ToHash:    "def",
+		Overrides: &dto.GenerationOverrides{
+			MaxTokens: intPtr(4096),
+		},
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called)
+	assert.Equal(t, intPtr(4096), gen.capturedInput.MaxTokensOverride)
+}
+
+func TestAnalyzePR_OverridesFlowToGenerator(t *testing.T) {
+	bb := &mockBitbucketClient{
+		diff: "diff --git a/main.go\n+pr override",
+		pr:   &bitbucket.PullRequest{ID: 1, Title: "PR"},
+	}
+	gen := &mockGenerator{
+		output: &openai.GenerationOutput{
+			Description: "PR override result",
+			Model:       "gpt-4o",
+			TokensUsed:  300,
+		},
+	}
+	repo := &mockRepository{getByHashErr: domain.ErrNotFound}
+	c := newMockCache()
+
+	svc := NewAnalysisService(bb, gen, repo, c)
+
+	_, err := svc.AnalyzePR(context.Background(), &dto.AnalyzePRRequest{
+		Workspace: "ws",
+		RepoSlug:  "repo",
+		PRID:      1,
+		Overrides: &dto.GenerationOverrides{
+			Temperature: float64Ptr(0.5),
+			Model:       strPtr("gpt-4o"),
+		},
+	})
+
+	require.NoError(t, err)
+	assert.True(t, gen.called)
+	assert.Equal(t, float64Ptr(0.5), gen.capturedInput.TemperatureOverride)
+	assert.Equal(t, strPtr("gpt-4o"), gen.capturedInput.ModelOverride)
 }

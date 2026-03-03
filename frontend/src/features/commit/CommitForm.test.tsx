@@ -85,4 +85,40 @@ describe('CommitForm', () => {
     expect(screen.getByLabelText('Repositorio')).toBeDisabled()
     expect(screen.getByLabelText('Hash do Commit')).toBeDisabled()
   })
+
+  it('does not include overrides when using defaults', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<CommitForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.click(screen.getByText('Colar Diff'))
+    await user.type(screen.getByLabelText('Diff'), 'diff --git a/main.go')
+
+    // Open advanced settings but don't change anything
+    await user.click(screen.getByText('Configurações avançadas'))
+
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.overrides).toBeUndefined()
+  })
+
+  it('includes overrides when non-default values are set', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    renderWithQuery(<CommitForm onSubmit={onSubmit} isPending={false} />)
+
+    await user.click(screen.getByText('Colar Diff'))
+    await user.type(screen.getByLabelText('Diff'), 'diff --git a/main.go')
+
+    // Open advanced settings and select GPT-4o model (non-default)
+    await user.click(screen.getByText('Configurações avançadas'))
+    await user.click(screen.getByText('GPT-4o'))
+
+    await user.click(screen.getByRole('button', { name: /gerar descricao/i }))
+
+    const payload = onSubmit.mock.calls[0][0]
+    expect(payload.overrides).toBeDefined()
+    expect(payload.overrides.model).toBe('gpt-4o')
+  })
 })

@@ -183,3 +183,133 @@ func (r *requestCapturingClient) CreateChatCompletion(ctx context.Context, req o
 	*r.captured = req
 	return r.inner.CreateChatCompletion(ctx, req)
 }
+
+func intPtr(v int) *int          { return &v }
+func float64Ptr(v float64) *float64 { return &v }
+func strPtr(v string) *string    { return &v }
+
+func TestGenerate_OverridesAppliedToRequest(t *testing.T) {
+	var capturedReq oai.ChatCompletionRequest
+	mock := &mockChatClient{
+		response: oai.ChatCompletionResponse{
+			Choices: []oai.ChatCompletionChoice{
+				{Message: oai.ChatCompletionMessage{Content: "Override result"}},
+			},
+			Usage: oai.Usage{TotalTokens: 100},
+		},
+	}
+	wrapper := &requestCapturingClient{inner: mock, captured: &capturedReq}
+	gen := NewGenerator(wrapper, cache.NewInMemoryCache(), testGenConfig)
+
+	out, err := gen.Generate(context.Background(), GenerationInput{
+		Diff:                "diff --git a/main.go b/main.go\n+override test",
+		AnalysisType:        "single_commit",
+		MaxTokensOverride:   intPtr(2048),
+		TemperatureOverride: float64Ptr(0.8),
+		ModelOverride:       strPtr("gpt-4o"),
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "Override result", out.Description)
+	assert.Equal(t, "gpt-4o", capturedReq.Model)
+	assert.Equal(t, 2048, capturedReq.MaxTokens)
+	assert.InDelta(t, 0.8, float64(capturedReq.Temperature), 0.01)
+}
+
+func TestGenerate_CacheBypassedWithOverrides(t *testing.T) {
+	mock := &mockChatClient{
+		response: oai.ChatCompletionResponse{
+			Choices: []oai.ChatCompletionChoice{
+				{Message: oai.ChatCompletionMessage{Content: "Fresh result"}},
+			},
+			Usage: oai.Usage{TotalTokens: 100},
+		},
+	}
+
+	c := cache.NewInMemoryCache()
+	gen := NewGenerator(mock, c, testGenConfig)
+
+	diff := "diff --git a/main.go b/main.go\n+cache bypass test"
+	inputWithOverrides := GenerationInput{
+		Diff:              diff,
+		AnalysisType:      "single_commit",
+		MaxTokensOverride: intPtr(2048),
+	}
+
+	// First call with overrides — should NOT cache
+	out1, err := gen.Generate(context.Background(), inputWithOverrides)
+	require.NoError(t, err)
+	assert.Equal(t, 1, mock.calls)
+	assert.Equal(t, "Fresh result", out1.Description)
+
+	// Second call with same overrides — should NOT hit cache, calls API again
+	out2, err := gen.Generate(context.Background(), inputWithOverrides)
+	require.NoError(t, err)
+	assert.Equal(t, 2, mock.calls)
+	assert.NotEqual(t, "cache", out2.Model)
+}
+
+func TestGenerate_ModelAutoDelegatesToSelectModel(t *testing.T) {
+	var capturedReq oai.ChatCompletionRequest
+	mock := &mockChatClient{
+		response: oai.ChatCompletionResponse{
+			Choices: []oai.ChatCompletionChoice{
+				{Message: oai.ChatCompletionMessage{Content: "Auto model result"}},
+			},
+			Usage: oai.Usage{TotalTokens: 100},
+		},
+	}
+	wrapper := &requestCapturingClient{inner: mock, captured: &capturedReq}
+	gen := NewGenerator(wrapper, cache.NewInMemoryCache(), testGenConfig)
+
+	out, err := gen.Generate(context.Background(), GenerationInput{
+		Diff:          "diff --git a/main.go b/main.go\n+auto model test",
+		AnalysisType:  "single_commit",
+		ModelOverride: strPtr("auto"),
+	})
+
+	require.NoError(t, err)
+	// "auto" should delegate to SelectModel, which picks default model for small diffs
+	assert.Equal(t, "gpt-4o-mini", capturedReq.Model)
+	assert.Equal(t, "gpt-4o-mini", out.Model)
+}
+
+func TestHasOverrides(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    GenerationInput
+		expected bool
+	}{
+		{
+			name:     "no overrides",
+			input:    GenerationInput{},
+			expected: false,
+		},
+		{
+			name:     "max_tokens override",
+			input:    GenerationInput{MaxTokensOverride: intPtr(2048)},
+			expected: true,
+		},
+		{
+			name:     "temperature override",
+			input:    GenerationInput{TemperatureOverride: float64Ptr(0.8)},
+			expected: true,
+		},
+		{
+			name:     "model override non-auto",
+			input:    GenerationInput{ModelOverride: strPtr("gpt-4o")},
+			expected: true,
+		},
+		{
+			name:     "model override auto is not an override",
+			input:    GenerationInput{ModelOverride: strPtr("auto")},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.input.HasOverrides())
+		})
+	}
+}
